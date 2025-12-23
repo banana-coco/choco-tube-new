@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}再生履歴 - チョコTube{% endblock %}
+
+{% block content %}
+<div class="static-page">
+    <div class="history-header">
+        <h1 class="page-title">再生履歴</h1>
+        <button class="clear-history-btn" id="clearHistoryBtn">履歴をクリア</button>
+    </div>
+    
+    <div class="history-list" id="historyList">
+        <p class="no-history">履歴を読み込み中...</p>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const historyList = document.getElementById('historyList');
+    const clearBtn = document.getElementById('clearHistoryBtn');
+    
+    function getCookie(name) {
+        const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+        return v ? decodeURIComponent(v.pop()) : null;
+    }
+    
+    function vcToPath(vc) {
+        switch(vc) {
+            case '1': return '/watch';
+            case '2': return '/w';
+            case '3': return '/ume';
+            case '0': return '/edu';
+            default: return '/watch';
+        }
+    }
+    
+    function loadHistory() {
+        const history = JSON.parse(localStorage.getItem('chocoHistory') || '[]');
+        
+        if (history.length === 0) {
+            historyList.innerHTML = '<p class="no-history">再生履歴はありません</p>';
+            return;
+        }
+        
+        const vc = getCookie('vc') || '1';
+        const basePath = vcToPath(vc);
+        
+        let html = '';
+        history.forEach(function(item, index) {
+            html += '<a href="' + basePath + '?v=' + item.id + '" class="history-item">' +
+                '<img src="https://i.ytimg.com/vi/' + item.id + '/mqdefault.jpg" alt="' + escapeHtml(item.title) + '" class="history-thumbnail">' +
+                '<div class="history-info">' +
+                    '<h3 class="history-title">' + escapeHtml(item.title) + '</h3>' +
+                    '<p class="history-author">' + escapeHtml(item.author) + '</p>' +
+                    '<p class="history-date">' + item.watchedAt + '</p>' +
+                '</div>' +
+            '</a>';
+        });
+        
+        historyList.innerHTML = html;
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text || '';
+        return div.innerHTML;
+    }
+    
+    clearBtn.addEventListener('click', function() {
+        if (confirm('再生履歴をすべて削除しますか？')) {
+            localStorage.removeItem('chocoHistory');
+            loadHistory();
+        }
+    });
+    
+    loadHistory();
+});
+</script>
+{% endblock %}
