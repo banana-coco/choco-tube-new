@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: chocotube
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 300 --keep-alive 5 --log-level info
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+      - key: YOUTUBE_API_KEY
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: RENDER
+        value: "true"
