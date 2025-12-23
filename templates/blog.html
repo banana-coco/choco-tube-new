@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}ブログ - チョコTube{% endblock %}
+
+{% block content %}
+<div class="static-page">
+    <h1 class="page-title">ブログ</h1>
+    
+    <div class="blog-list">
+        {% for post in posts %}
+        <article class="blog-card">
+            <div class="blog-card-header">
+                <span class="blog-date">{{ post.date }}</span>
+                {% if post.category %}
+                <span class="blog-category">{{ post.category }}</span>
+                {% endif %}
+            </div>
+            <h2 class="blog-title">{{ post.title }}</h2>
+            <p class="blog-excerpt">{{ post.excerpt }}</p>
+            <div class="blog-content">
+                {{ post.content|safe }}
+            </div>
+        </article>
+        {% else %}
+        <div class="no-posts">
+            <p>まだ投稿がありません。</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
