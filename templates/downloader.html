@@ -1,0 +1,1036 @@
+{% extends "base.html" %}
+
+{% block title %}ダウンローダー - チョコTube{% endblock %}
+
+{% block extra_css %}
+<style>
+.downloader-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.downloader-title {
+    font-size: 28px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.downloader-card {
+    background: var(--bg-card);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 24px;
+}
+
+.url-input-group {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.url-input {
+    flex: 1;
+    padding: 16px 20px;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.url-input:focus {
+    border-color: var(--accent-primary);
+}
+
+.url-input::placeholder {
+    color: var(--text-secondary);
+}
+
+.fetch-btn {
+    padding: 16px 32px;
+    background: var(--accent-primary);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+}
+
+.fetch-btn:hover {
+    background: var(--accent-secondary);
+    transform: translateY(-2px);
+}
+
+.fetch-btn:disabled {
+    background: var(--text-secondary);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.video-preview {
+    display: none;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.video-preview.show {
+    display: block;
+}
+
+.preview-content {
+    display: flex;
+    gap: 20px;
+}
+
+.preview-thumbnail {
+    width: 200px;
+    aspect-ratio: 16/9;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.preview-info {
+    flex: 1;
+}
+
+.preview-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.preview-channel {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.preview-duration {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.watch-on-choco-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    color: #fff;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: transform 0.2s, box-shadow 0.3s;
+}
+
+.watch-on-choco-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(139, 69, 19, 0.4);
+}
+
+.download-options {
+    display: none;
+    margin-top: 24px;
+}
+
+.download-options.show {
+    display: block;
+}
+
+.method-section {
+    margin-bottom: 24px;
+}
+
+.method-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+}
+
+.method-options {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.method-btn {
+    padding: 14px 24px;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    justify-content: center;
+}
+
+.method-btn:hover {
+    border-color: var(--accent-primary);
+    background: rgba(139, 69, 19, 0.1);
+}
+
+.method-btn.active {
+    border-color: var(--accent-primary);
+    background: var(--accent-primary);
+    color: #fff;
+}
+
+.method-description {
+    background: rgba(139, 69, 19, 0.1);
+    border: 1px solid rgba(139, 69, 19, 0.3);
+    border-radius: 10px;
+    padding: 16px;
+    margin-top: 12px;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.quality-section {
+    margin-bottom: 20px;
+}
+
+.quality-title {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 12px;
+    color: var(--text-secondary);
+}
+
+.quality-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.quality-btn {
+    padding: 10px 20px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.quality-btn:hover {
+    border-color: var(--accent-light);
+}
+
+.quality-btn.selected {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: #fff;
+}
+
+.download-buttons-container {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.download-btn-main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 18px;
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.3s;
+    text-align: center;
+    text-decoration: none;
+    flex: 1;
+    min-width: 200px;
+}
+
+.download-btn-main:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.download-btn-main:disabled {
+    background: var(--text-secondary);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.download-btn-main.mp4-download {
+    background: linear-gradient(135deg, #8B4513, #A0522D);
+}
+
+
+.download-btn-main.m4a-download {
+    background: linear-gradient(135deg, #9B59B6, #8E44AD);
+}
+
+.download-btn-main.thumbnail-download {
+    background: linear-gradient(135deg, #3498DB, #2980B9);
+}
+
+.thumbnail-quality-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.thumbnail-quality-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.thumbnail-quality-btn {
+    padding: 8px 16px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.thumbnail-quality-btn:hover {
+    border-color: var(--accent-light);
+}
+
+.thumbnail-quality-btn.selected {
+    background: #3498DB;
+    border-color: #3498DB;
+    color: #fff;
+}
+
+.format-section-title {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 10px;
+    color: var(--text-secondary);
+}
+
+.loading-spinner {
+    display: none;
+    text-align: center;
+    padding: 20px;
+}
+
+.loading-spinner.show {
+    display: block;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border-color);
+    border-top-color: var(--accent-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 12px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.error-message {
+    display: none;
+    background: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    border-radius: 8px;
+    padding: 16px;
+    color: #dc3545;
+    margin-bottom: 20px;
+}
+
+.error-message.show {
+    display: block;
+}
+
+.success-message {
+    display: none;
+    background: rgba(46, 204, 113, 0.1);
+    border: 1px solid rgba(46, 204, 113, 0.3);
+    border-radius: 8px;
+    padding: 16px;
+    color: #2ecc71;
+    margin-bottom: 20px;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.success-message.show {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.download-progress {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 20px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    margin-top: 20px;
+}
+
+.download-progress.show {
+    display: flex;
+}
+
+.progress-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--border-color);
+    border-top-color: var(--accent-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.progress-text {
+    color: var(--text-primary);
+    font-size: 15px;
+}
+
+.info-box {
+    background: rgba(139, 69, 19, 0.1);
+    border: 1px solid rgba(139, 69, 19, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 24px;
+}
+
+.info-box-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.info-box ul {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--text-secondary);
+}
+
+.info-box li {
+    margin-bottom: 6px;
+    line-height: 1.5;
+}
+
+.external-site-btn {
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #3498DB, #2980B9);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.3s;
+    margin-left: auto;
+}
+
+.external-site-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+}
+
+.external-embed-container {
+    display: none;
+    position: fixed;
+    top: 64px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    background: var(--bg-primary);
+}
+
+.external-embed-container.show {
+    display: block;
+}
+
+.external-back-bar {
+    height: 50px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    border-bottom: 1px solid #2a2a4a;
+}
+
+.back-to-downloader-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #fff;
+    text-decoration: none;
+    padding: 8px 16px;
+    background: #8b4513;
+    border-radius: 8px;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.back-to-downloader-btn:hover {
+    background: #d2691e;
+}
+
+.external-embed-frame {
+    width: 100%;
+    height: calc(100% - 50px);
+    border: none;
+    display: block;
+}
+
+.other-methods-container {
+    display: none;
+    margin-top: 12px;
+}
+
+.other-methods-container.show {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.show-other-methods-btn {
+    padding: 14px 24px;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    justify-content: center;
+}
+
+.show-other-methods-btn:hover {
+    border-color: var(--accent-primary);
+    background: rgba(139, 69, 19, 0.1);
+}
+
+.method2-formats-container {
+    display: none;
+    margin-top: 12px;
+}
+
+.method2-formats-container.show {
+    display: block;
+}
+
+.format-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.format-btn {
+    padding: 12px 16px;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+}
+
+.format-btn:hover {
+    border-color: var(--accent-primary);
+    background: rgba(139, 69, 19, 0.1);
+}
+
+.format-btn.video-format {
+    border-left: 4px solid #8B4513;
+}
+
+.format-btn.audio-format {
+    border-left: 4px solid #2ECC71;
+}
+
+@media (max-width: 768px) {
+    .url-input-group {
+        flex-direction: column;
+    }
+
+    .preview-content {
+        flex-direction: column;
+    }
+
+    .preview-thumbnail {
+        width: 100%;
+    }
+
+    .method-options {
+        flex-direction: column;
+    }
+
+    .downloader-title {
+        flex-wrap: wrap;
+    }
+
+    .external-site-btn {
+        margin-left: 0;
+        margin-top: 12px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="downloader-container" id="mainDownloader">
+    <h1 class="downloader-title">
+        <span>📥</span>
+        動画・音声ダウンローダー
+        <button class="external-site-btn" onclick="showExternalEmbed()">
+            🌐 外部サイトを埋め込んだものを使用
+        </button>
+    </h1>
+
+    <div class="downloader-card">
+        <div class="url-input-group">
+            <input type="text" class="url-input" id="videoUrl" placeholder="YouTube動画のURLを入力してください..." autocomplete="off">
+            <button class="fetch-btn" id="fetchBtn" onclick="fetchVideoInfo()">取得</button>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner"></div>
+            <p>動画情報を取得中...</p>
+        </div>
+
+        <div class="video-preview" id="videoPreview">
+            <div class="preview-content">
+                <img class="preview-thumbnail" id="previewThumbnail" src="" alt="Thumbnail">
+                <div class="preview-info">
+                    <h3 class="preview-title" id="previewTitle"></h3>
+                    <p class="preview-channel" id="previewChannel"></p>
+                    <p class="preview-duration" id="previewDuration"></p>
+                    <a href="#" class="watch-on-choco-btn" id="watchOnChocoBtn">
+                        <span>🍫</span> チョコTubeで見る
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="download-options" id="downloadOptions">
+            <div class="method-section">
+                <h4 class="method-title">ダウンロード方法を選択</h4>
+                <div class="method-options">
+                    <button class="method-btn active" data-method="2" onclick="selectMethod('2')">
+                        <span>⚡</span> 方法2（高速）
+                    </button>
+                    <button class="method-btn" data-method="8" onclick="selectMethod('8')">
+                        <span>🎯</span> 方法8（確実MP3）
+                    </button>
+                    <button class="show-other-methods-btn" onclick="toggleOtherMethods()">
+                        <span>📋</span> その他の方法
+                    </button>
+                </div>
+                <div class="other-methods-container" id="otherMethodsContainer">
+                    <button class="method-btn" data-method="1" onclick="selectMethod('1')">
+                        <span>🔧</span> 方法1（高品質）
+                    </button>
+                    <button class="method-btn" data-method="3" onclick="selectMethod('3')">
+                        <span>🎵</span> 方法3（音声直接）
+                    </button>
+                    <button class="method-btn" data-method="4" onclick="selectMethod('4')">
+                        <span>🔄</span> 方法4（ConvertHub）
+                    </button>
+                    <button class="method-btn" data-method="5" onclick="selectMethod('5')">
+                        <span>🎛️</span> 方法5（Transloadit）
+                    </button>
+                    <button class="method-btn" data-method="6" onclick="selectMethod('6')">
+                        <span>📦</span> 方法6（FreeConvert）
+                    </button>
+                    <button class="method-btn" data-method="7" onclick="selectMethod('7')">
+                        <span>🤖</span> 方法7（Apify）
+                    </button>
+                </div>
+                <div class="method-description" id="methodDescription">
+                    <strong>方法2:</strong> 外部APIを使用して素早くダウンロードします。360p推奨。音声はM4A形式です。
+                </div>
+            </div>
+
+            <div class="quality-section" id="videoQualitySection">
+                <h4 class="quality-title">動画画質を選択</h4>
+                <div class="quality-buttons" id="videoQualities">
+                    <button class="quality-btn" data-quality="1080" onclick="selectQuality('1080')">1080p</button>
+                    <button class="quality-btn selected" data-quality="720" onclick="selectQuality('720')">720p</button>
+                    <button class="quality-btn" data-quality="480" onclick="selectQuality('480')">480p</button>
+                    <button class="quality-btn" data-quality="360" onclick="selectQuality('360')">360p</button>
+                </div>
+            </div>
+
+            <div id="method1Buttons" class="download-buttons-container" style="display: none;">
+                <button class="download-btn-main mp4-download" onclick="startDownload('mp4')">
+                    <span>🎬</span> MP4をダウンロード
+                </button>
+            </div>
+
+            <div id="method2Buttons" class="download-buttons-container" style="display: flex;">
+                <div style="width: 100%;">
+                    <p class="format-section-title">🎬 動画形式</p>
+                    <div class="format-grid">
+                        <button class="format-btn video-format" onclick="startDownload('mp4')">MP4</button>
+                        <button class="format-btn video-format" onclick="startDownload('webm')">WebM</button>
+                        <button class="format-btn video-format" onclick="startDownload('3gp')">3GP</button>
+                    </div>
+                    <p class="format-section-title" style="margin-top: 16px;">🎵 音声形式</p>
+                    <div class="format-grid">
+                        <button class="format-btn audio-format" onclick="startDownload('m4a')">M4A</button>
+                        <button class="format-btn audio-format" onclick="startDownload('opus')">Opus</button>
+                        <button class="format-btn audio-format" onclick="startDownload('ogg')">OGG</button>
+                        <button class="format-btn audio-format" onclick="startDownload('wav')">WAV</button>
+                        <button class="format-btn audio-format" onclick="startDownload('aac')">AAC</button>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="thumbnail-quality-section">
+                <p class="format-section-title">🖼️ サムネイルダウンロード</p>
+                <div class="thumbnail-quality-buttons">
+                    <button class="thumbnail-quality-btn" data-tq="max" onclick="selectThumbnailQuality('max')">最高画質</button>
+                    <button class="thumbnail-quality-btn selected" data-tq="hq" onclick="selectThumbnailQuality('hq')">高画質</button>
+                    <button class="thumbnail-quality-btn" data-tq="mq" onclick="selectThumbnailQuality('mq')">標準</button>
+                    <button class="thumbnail-quality-btn" data-tq="default" onclick="selectThumbnailQuality('default')">低画質</button>
+                </div>
+                <div class="download-buttons-container" style="margin-top: 12px;">
+                    <button class="download-btn-main thumbnail-download" onclick="downloadThumbnail()">
+                        <span>🖼️</span> サムネイルをダウンロード
+                    </button>
+                </div>
+            </div>
+
+            <div class="download-progress" id="downloadProgress">
+                <div class="progress-spinner"></div>
+                <p class="progress-text" id="progressText">ダウンロードリンクを取得中...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-box">
+        <h4 class="info-box-title">
+            <span>ℹ️</span>
+            ご利用について
+        </h4>
+        <ul>
+            <li><strong>方法1:</strong> 高品質ダウンロード。サーバーで処理するため時間がかかりますが、安定しています。</li>
+            <li><strong>方法2:</strong> 高速ダウンロード。外部APIを使用するため素早くダウンロードできます（360p推奨）。</li>
+            <li>著作権に配慮してご利用ください</li>
+            <li>ダウンロードには時間がかかる場合があります</li>
+        </ul>
+    </div>
+</div>
+
+<div class="external-embed-container" id="externalEmbedContainer">
+    <div class="external-back-bar">
+        <button class="back-to-downloader-btn" onclick="hideExternalEmbed()">
+            📥 ダウンローダーに戻る
+        </button>
+        <button class="back-to-downloader-btn" onclick="window.open('https://scratch.mit.edu/projects/1252869725/', '_blank')" style="margin-left: 10px;">
+            ❓お問い合わせはここをクリック
+        </button>
+    </div>
+    <iframe class="external-embed-frame" id="externalFrame" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentVideoId = '';
+let selectedQuality = '720';
+let selectedMethod = '2';
+let selectedThumbnailQuality = 'hq';
+let otherMethodsVisible = false;
+
+function showExternalEmbed() {
+    document.getElementById('mainDownloader').style.display = 'none';
+    document.querySelector('.info-box').style.display = 'none';
+    const embedContainer = document.getElementById('externalEmbedContainer');
+    embedContainer.classList.add('show');
+    document.getElementById('externalFrame').src = 'https://www.subeasy.ai/ja-JP/youtube-to-mp4';
+}
+
+function hideExternalEmbed() {
+    document.getElementById('mainDownloader').style.display = 'block';
+    document.querySelector('.info-box').style.display = 'block';
+    const embedContainer = document.getElementById('externalEmbedContainer');
+    embedContainer.classList.remove('show');
+    document.getElementById('externalFrame').src = '';
+}
+
+function toggleOtherMethods() {
+    otherMethodsVisible = !otherMethodsVisible;
+    const container = document.getElementById('otherMethodsContainer');
+    container.classList.toggle('show', otherMethodsVisible);
+}
+
+function extractVideoId(url) {
+    const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+        /^([a-zA-Z0-9_-]{11})$/
+    ];
+
+    for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match) return match[1];
+    }
+    return null;
+}
+
+function showError(message) {
+    const errorEl = document.getElementById('errorMessage');
+    errorEl.textContent = message;
+    errorEl.classList.add('show');
+}
+
+function hideError() {
+    document.getElementById('errorMessage').classList.remove('show');
+}
+
+function showSuccessMessage(message) {
+    const successEl = document.getElementById('successMessage');
+    successEl.textContent = message;
+    successEl.classList.add('show');
+    setTimeout(() => {
+        successEl.classList.remove('show');
+    }, 5000);
+}
+
+function hideSuccessMessage() {
+    document.getElementById('successMessage').classList.remove('show');
+}
+
+function showLoading(show) {
+    document.getElementById('loadingSpinner').classList.toggle('show', show);
+    document.getElementById('fetchBtn').disabled = show;
+}
+
+async function fetchVideoInfo() {
+    const url = document.getElementById('videoUrl').value.trim();
+    if (!url) {
+        showError('URLを入力してください');
+        return;
+    }
+
+    const videoId = extractVideoId(url);
+    if (!videoId) {
+        showError('有効なYouTube URLを入力してください');
+        return;
+    }
+
+    hideError();
+    showLoading(true);
+    document.getElementById('videoPreview').classList.remove('show');
+    document.getElementById('downloadOptions').classList.remove('show');
+
+    try {
+        const response = await fetch(`/api/video-info/${videoId}`);
+        const data = await response.json();
+
+        if (data.error) {
+            showError(data.error);
+            showLoading(false);
+            return;
+        }
+
+        currentVideoId = videoId;
+
+        document.getElementById('previewThumbnail').src = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+        document.getElementById('previewTitle').textContent = data.title || 'タイトル不明';
+        document.getElementById('previewChannel').textContent = data.author || '';
+        document.getElementById('previewDuration').textContent = data.lengthText ? `再生時間: ${data.lengthText}` : '';
+        document.getElementById('watchOnChocoBtn').href = `/watch?v=${videoId}`;
+
+        document.getElementById('videoPreview').classList.add('show');
+        document.getElementById('downloadOptions').classList.add('show');
+
+    } catch (error) {
+        showError('動画情報の取得に失敗しました');
+    }
+
+    showLoading(false);
+}
+
+function selectQuality(quality) {
+    selectedQuality = quality;
+    document.querySelectorAll('.quality-btn').forEach(btn => {
+        btn.classList.toggle('selected', btn.dataset.quality === quality);
+    });
+}
+
+function selectMethod(method) {
+    selectedMethod = method;
+    document.querySelectorAll('.method-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.method === method);
+    });
+
+    const descEl = document.getElementById('methodDescription');
+    for (let i = 1; i <= 8; i++) {
+        const btns = document.getElementById(`method${i}Buttons`);
+        if (btns) btns.style.display = 'none';
+    }
+
+    const descriptions = {
+        '1': '<strong>方法1:</strong> サーバーでダウンロード処理を行います。高品質ですが時間がかかる場合があります。',
+        '2': '<strong>方法2:</strong> 外部APIを使用して素早くダウンロードします。360p推奨。音声はM4A形式です。',
+        '3': '<strong>方法3:</strong> YouTubeから直接音声URLを取得します。googlevideo.comからのストリーミングです。',
+        '4': '<strong>方法4:</strong> ConvertHub APIを使用。800種類以上のファイル形式に対応した高品質変換。',
+        '5': '<strong>方法5:</strong> Transloadit APIを使用。プロ品質のオーディオエンコーディング。',
+        '6': '<strong>方法6:</strong> FreeConvert APIを使用。MP3、FLAC、WAVなど多形式対応。',
+        '7': '<strong>方法7:</strong> Apify Audio Converter APIを使用。Telegram/WhatsApp形式にも対応。',
+        '8': '<strong>方法8:</strong> 確実にMP3をダウンロード。外部変換サービスを使用するため、エラーが出にくい方法です。'
+    };
+
+    descEl.innerHTML = descriptions[method] || '';
+    const methodBtns = document.getElementById(`method${method}Buttons`);
+    if (methodBtns) methodBtns.style.display = 'flex';
+}
+
+function selectThumbnailQuality(quality) {
+    selectedThumbnailQuality = quality;
+    document.querySelectorAll('.thumbnail-quality-btn').forEach(btn => {
+        btn.classList.toggle('selected', btn.dataset.tq === quality);
+    });
+}
+
+function downloadThumbnail() {
+    if (!currentVideoId) {
+        showError('まず動画情報を取得してください');
+        return;
+    }
+
+    window.location.href = `/api/thumbnail-download/${currentVideoId}?quality=${selectedThumbnailQuality}`;
+}
+
+function showDownloadProgress(show, message = 'ダウンロードリンクを取得中...') {
+    const progressEl = document.getElementById('downloadProgress');
+    const progressText = document.getElementById('progressText');
+    progressText.textContent = message;
+    progressEl.classList.toggle('show', show);
+}
+
+async function startDownload(format) {
+    if (!currentVideoId) {
+        showError('まず動画情報を取得してください');
+        return;
+    }
+
+    hideError();
+
+    if (selectedMethod === '1') {
+        const formatMsg = format === 'mp3' ? 'MP3を作成中（しばらくお待ちください）...' : 'MP4を作成中（しばらくお待ちください）...';
+        showDownloadProgress(true, formatMsg);
+
+        const downloadUrl = `/api/internal-download/${currentVideoId}?format=${format}&quality=${selectedQuality}`;
+
+        try {
+            const response = await fetch(downloadUrl);
+            if (response.ok) {
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = `${currentVideoId}.${format}`;
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename\*?=(?:UTF-8'')?["']?([^;"'\n]+)/i);
+                    if (filenameMatch) {
+                        filename = decodeURIComponent(filenameMatch[1].replace(/['"]/g, ''));
+                    }
+                }
+                
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                const downloadLink = document.createElement('a');
+                downloadLink.href = blobUrl;
+                downloadLink.download = filename;
+                downloadLink.style.display = 'none';
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+                window.URL.revokeObjectURL(blobUrl);
+                
+                showDownloadProgress(false);
+                showSuccessMessage(`${format.toUpperCase()}ファイルを自動保存しました！`);
+            } else {
+                showDownloadProgress(false);
+                showError('ダウンロードに失敗しました。もう一度お試しください。');
+            }
+        } catch (error) {
+            showDownloadProgress(false);
+            showError('ダウンロードに失敗しました: ' + error.message);
+        }
+    } else {
+        const formatName = format === 'm4a' ? 'M4A音声' : (format === 'mp4' ? 'MP4動画' : format.toUpperCase());
+        showDownloadProgress(true, `${formatName}のダウンロードリンクを取得中...`);
+
+        try {
+            const response = await fetch(`/api/lite-download/${currentVideoId}?format=${format}&quality=${selectedQuality}`);
+            const data = await response.json();
+
+            if (data.success && data.url) {
+                showDownloadProgress(false);
+                if (data.actual_format && data.actual_format !== format) {
+                    alert(`注意: ${data.actual_format.toUpperCase()}形式でダウンロードされます`);
+                }
+                window.open(data.url, '_blank');
+            } else {
+                showDownloadProgress(false);
+                showError(data.error || 'ダウンロードリンクの取得に失敗しました');
+            }
+        } catch (error) {
+            showDownloadProgress(false);
+            showError('ダウンロードリンクの取得に失敗しました');
+        }
+    }
+}
+
+document.getElementById('videoUrl').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        fetchVideoInfo();
+    }
+});
+</script>
+{% endblock %}
