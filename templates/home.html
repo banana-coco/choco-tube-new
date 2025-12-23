@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}チョコTube - ホーム{% endblock %}
+
+{% block content %}
+
+<body>
+  <div id="announcement-modal" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 9999; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+  <div style="background: white; border-radius: 16px; width: 90%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); overflow: hidden; position: relative; animation: slideIn 0.3s ease;">
+    <!-- 閉じるボタン -->
+    <button onclick="document.getElementById('announcement-modal').style.display='none';" style="position: absolute; top: 12px; left: 12px; background: none; border: none; font-size: 24px; color: #555; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background-color: #f0f0f0; transition: background 0.2s;">
+      ×
+    </button>
+    
+    <!-- お知らせ内容 -->
+    <div style="padding: 32px 24px 24px; color: #333; text-align: center;">
+      <h2 style="margin: 0 0 16px 0; font-size: 20px; color: #007BFF;">チョコTubeについて</h2>
+      <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.6; text-align: left;">
+        これは私(choco-banana-)が作ったyoutube視聴サイトです<br>
+        プロキシ、チャンネル登録、動画取得改善、m3u8での視聴の機能を追加<br <br>
+        まだまだ改善すべき点はたくさんあります。<br>
+        そのため意見などを<a href="https://scratch.mit.edu/projects/1252869725/" target="_blank">こちら</a>または<a href="/chat">chat</a>でどんどんお待ちしてます。<br>
+        -------------------------------------------------------------------------<br>
+        まず<a href="/setting">⚙設定</a>で/検索方法/動画の再生方法など/を決めるべし<br>
+        <br>※ダウンローダーの機能は使えません。<br>
+        外部サービスの埋め込みを押してご利用ください<br>プロキシ、ゲームを追加予定<br>-------------------------------------------------------------------------<br>
+        <a href="https://scratch.mit.edu/users/choco-banana-/" target="_blank" style="color: #555; text-decoration: none;">©2025 choco-banana-</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ポップアップ表示アニメーション -->
+<style>
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+
+<div class="dashboard-container">
+    <h1 style="text-align: center; font-size: 3rem; margin-bottom: 20px; color: #8B4513;">🍫チョコTube</h1>
+    <div class="counter-section">
+        <div class="counter-box">
+            <img src="https://count.getloli.com/@choco-banana-?name=choco-banana-&theme=booru-lisu&padding=6&offset=0&align=center&scale=1&pixelated=1&darkmode=auto" alt="訪問者カウンター" class="counter-image">
+        </div>
+    </div>
+
+    <div class="feature-boxes">
+        <a href="/chat" class="feature-box feature-box-chat">
+            <div class="feature-icon">💬</div>
+            <div class="feature-content">
+                <h3 class="feature-title">チョコchat</h3>
+                <p class="feature-description">荒らしは来ないでね。作るのにめっちゃ時間かかった…</p>
+            </div>
+            <div class="feature-arrow">→</div>
+        </a>
+
+        <a href="/trend" class="feature-box feature-box-trend">
+            <div class="feature-icon">🔥</div>
+            <div class="feature-content">
+                <h3 class="feature-title">トレンド</h3>
+                <p class="feature-description">急上昇の動画をチェック</p>
+            </div>
+            <div class="feature-arrow">→</div>
+        </a>
+
+        <a href="/tool" class="feature-box feature-box-tools">
+            <div class="feature-icon">🛠️</div>
+            <div class="feature-content">
+                <h3 class="feature-title">その他のツール</h3>
+                <p class="feature-description">ブログ、履歴など</p>
+            </div>
+            <div class="feature-arrow">→</div>
+        </a>
+    </div>
+
+    <div class="quick-links">
+        <h3 class="quick-links-title">ツール一部分</h3>
+        <div class="quick-links-grid">
+            <a href="/setting" class="quick-link">
+                <span class="quick-link-icon">⚙</span>
+                <span>設定</span>
+            </a>
+             <a href="/downloader" class="quick-link">
+                <span class="quick-link-icon">📥</span>
+                <span>ダウンローダー</span>
+            </a>
+            </a>
+            <a href="/history" class="quick-link">
+                <span class="quick-link-icon">📜</span>
+                <span>再生履歴</span>
+            </a>
+            <a href="/favorite" class="quick-link">
+                <span class="quick-link-icon">⭐</span>
+                <span>お気に入り</span>
+            </a>
+            <a href="/blog" class="quick-link">
+                <span class="quick-link-icon">📝</span>
+                <span>ブログ</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
