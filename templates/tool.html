@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}ツール - チョコTube{% endblock %}
+
+{% block content %}
+<div class="static-page">
+    <h1 class="page-title">その他のツール</h1>
+    
+    <div class="tool-grid">
+        <a href="/downloader" class="tool-card">
+            <div class="tool-icon">📥</div>
+            <div class="tool-content">
+                <h3 class="tool-title">ダウンローダー</h3>
+                <p class="tool-description">サムネダウンロード可<br>urlからチョコtubeで視聴するの可能<br>結局mp3,mp4化は×。ぼっと認証突破ムリ。</p>
+            </div>
+        </a>
+
+         <a href="/getcode" class="tool-card">
+            <div class="tool-icon">💻</div>
+            <div class="tool-content">
+                <h3 class="tool-title">コード取得</h3>
+                <p class="tool-description">サイトのコードを表示</p>
+            </div>
+        </a>
+
+        <a href="/proxy" class="tool-card">
+            <div class="tool-icon">🌐</div>
+            <div class="tool-content">
+                <h3 class="tool-title">Webプロキシ</h3>
+                <p class="tool-description">ブロックされたサイトにアクセス</p>
+            </div>
+        </a>
+
+        <a href="/history" class="tool-card">
+            <div class="tool-icon">📜</div>
+            <div class="tool-content">
+                <h3 class="tool-title">再生履歴</h3>
+                <p class="tool-description">視聴した動画の履歴を確認</p>
+            </div>
+        </a>
+
+        <a href="/favorite" class="tool-card">
+            <div class="tool-icon">⭐</div>
+            <div class="tool-content">
+                <h3 class="tool-title">お気に入り</h3>
+                <p class="tool-description">後で見たい動画を保存、閲覧可</p>
+            </div>
+        </a>
+
+         <a href="/blog" class="tool-card">
+            <div class="tool-icon">📝</div>
+            <div class="tool-content">
+                <h3 class="tool-title">ブログ</h3>
+                <p class="tool-description">更新情報</p>
+            </div>
+        </a>
+
+        <a href="/help" class="tool-card">
+            <div class="tool-icon">❓</div>
+            <div class="tool-content">
+                <h3 class="tool-title">ヘルプ</h3>
+                <p class="tool-description">使い方やよくある質問</p>
+            </div>
+        </a>
+
+        <a href="/setting" class="tool-card">
+            <div class="tool-icon">⚙️</div>
+            <div class="tool-content">
+                <h3 class="tool-title">設定</h3>
+                <p class="tool-description">検索方法や動画再生方法をカスタマイズ</p>
+            </div>
+        </a>
+
+        <a href="/subscribed-channels" class="tool-card">
+            <div class="tool-icon">✦</div>
+            <div class="tool-content">
+                <h3 class="tool-title">登録チャンネル</h3>
+                <p class="tool-description">登録した<br>チャンネルを表示</p>
+            </div>
+        </a>
+
+    </div>
+</div>
+{% endblock %}
