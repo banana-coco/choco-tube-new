@@ -1,0 +1,792 @@
+{% extends "base.html" %}
+
+{% block title %}{{ video.title if video else '動画' }} - チョコTube{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/hls.js@1.4.12/dist/hls.min.js" rel="preload" as="script">
+{% endblock %}
+
+{% block content %}
+<div class="watch-container">
+    <div class="watch-main">
+        <div class="player-container">
+            <div id="player-wrapper" class="player-wrapper">
+                {% if mode == 'embed' %}
+                <iframe id="embed-player" class="embed-player"
+                        src="{{ streams.embed }}"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen></iframe>
+                {% elif mode == 'education' %}
+                <iframe id="embed-player" class="embed-player"
+                        src="{{ streams.education }}"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen></iframe>
+                {% elif mode == 'high' and video and video.highstreamUrl %}
+                <video id="video-player" class="video-player" controls autoplay playsinline
+                       poster="https://i.ytimg.com/vi/{{ video_id }}/maxresdefault.jpg">
+                    <source src="{{ video.highstreamUrl }}" type="video/webm">
+                </video>
+                {% elif video and video.videoUrls %}
+                <video id="video-player" class="video-player" controls autoplay playsinline
+                       poster="https://i.ytimg.com/vi/{{ video_id }}/maxresdefault.jpg">
+                    {% for url in video.videoUrls %}
+                    <source src="{{ url }}" type="video/mp4">
+                    {% endfor %}
+                </video>
+                {% elif streams.primary %}
+                <video id="video-player" class="video-player" controls autoplay playsinline
+                       poster="https://i.ytimg.com/vi/{{ video_id }}/maxresdefault.jpg">
+                    <source src="{{ streams.primary }}" type="video/mp4">
+                </video>
+                {% elif streams.m3u8 %}
+                <video id="video-player" class="video-player" controls autoplay playsinline
+                       poster="https://i.ytimg.com/vi/{{ video_id }}/maxresdefault.jpg"></video>
+                {% else %}
+                <div class="player-error">
+                    <div class="error-content">
+                        <span class="error-icon">⚠️</span>
+                        <h3>再生できませんでした</h3>
+                        <p>動画を取得できませんでした。<br>以下のの再生モードどちらかをお試しください。</p>
+                        <div class="error-actions">
+                            <a href="/watch?v={{ video_id }}" class="error-btn primary">🎬 ストリームで再生</a>
+                            <a href="/edu?v={{ video_id }}" class="error-btn">🎓 Educationで再生</a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="player-controls">
+                <a href="/watch?v={{ video_id }}" class="player-source-btn {% if mode == 'stream' %}active{% endif %}">
+                    <span>🎬 ストリーム</span>
+                </a>
+                <a href="/w?v={{ video_id }}" class="player-source-btn {% if mode == 'high' %}active{% endif %}">
+                    <span>📺 高画質</span>
+                </a>
+                <a href="/ume?v={{ video_id }}" class="player-source-btn {% if mode == 'embed' %}active{% endif %}">
+                    <span>🔗 埋め込み</span>
+                </a>
+                <a href="/edu?v={{ video_id }}" class="player-source-btn {% if mode == 'education' %}active{% endif %}">
+                    <span>🎓 Education</span>
+                </a>
+            </div>
+
+            {% if mode == 'education' %}
+            <div class="edu-source-selector">
+                <label for="eduSourceSelect">EDUパラメータ:</label>
+                <select id="eduSourceSelect">
+                    {% for key, source in edu_sources.items() %}
+                    <option value="{{ key }}" {% if edu_source == key %}selected{% endif %}>{{ source.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+
+            {% if video and video.streamUrls %}
+            <div class="resolution-selector">
+                <label for="resolutionSelect">画質選択:</label>
+                <select id="resolutionSelect">
+                    {% for stream in video.streamUrls %}
+                    <option value="{{ stream.url }}">{{ stream.resolution }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if video %}
+        <div class="video-details">
+            <h1 class="video-title">{{ video.title }}</h1>
+            <div class="video-stats">
+                <span class="views">{{ video.views }} 回視聴</span>
+                <span class="separator">•</span>
+                <span class="published">{{ video.published }}</span>
+                <span class="likes">👍 {{ video.likes }}</span>
+            </div>
+
+            <div class="channel-info-section">
+                <div class="channel-info-left">
+                    <a href="/channel/{{ video.authorId }}" class="channel-avatar-link">
+                        {% if video.authorThumbnail %}
+                        <img src="{{ video.authorThumbnail }}" alt="{{ video.author }}" class="channel-avatar">
+                        {% else %}
+                        <div class="channel-avatar-placeholder">{{ video.author[:1] }}</div>
+                        {% endif %}
+                    </a>
+                    <div class="channel-details">
+                        <a href="/channel/{{ video.authorId }}" class="channel-name">{{ video.author }}</a>
+                        {% if video.subscribers %}
+                        <span class="subscribers">チャンネル登録者数 {{ video.subscribers }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="channel-actions">
+                    <button class="subscribe-btn" id="subscribeBtn" data-channel-id="{{ video.authorId }}" data-channel-name="{{ video.author }}">
+                        <span class="subscribe-icon">🔔</span> 登録
+                    </button>
+                    <a href="/channel/{{ video.authorId }}" class="channel-view-btn">チャンネルを見る</a>
+                </div>
+            </div>
+
+            <div class="description">
+                <div class="description-content" id="description">
+                    {{ video.description|safe }}
+                </div>
+                <button class="description-toggle" id="desc-toggle">もっと見る</button>
+            </div>
+
+            <div class="player-options">
+                <label class="option-label">
+                    <input type="checkbox" id="loopToggle">
+                    ループ再生
+                </label>
+                <label class="option-label">
+                    <input type="checkbox" id="autoNextToggle">
+                    自動で次の動画へ
+                </label>
+            </div>
+
+            <div class="action-buttons">
+                <button class="favorite-btn" id="favoriteBtn" data-video-id="{{ video_id }}" data-video-title="{{ video.title }}" data-video-author="{{ video.author }}">
+                    <span class="favorite-icon">☆</span> お気に入りに追加
+                </button>
+                <button class="subscribe-btn" id="subscribeChannelBtn" data-channel-id="{{ video.authorId }}" data-channel-name="{{ video.author }}">
+                    <span class="subscribe-icon">✦</span> チャンネル登録
+                </button>
+                {% if video.videoUrls and video.videoUrls[0] %}
+                <a href="{{ video.videoUrls[0] }}" download="{{ video.title }}" class="download-btn">
+                    ⬇️ ビデオダウンロード
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="comments-section">
+            <h3 class="comments-title">コメント</h3>
+            <div class="comments-list" id="comments">
+                {% for comment in comments %}
+                <div class="comment">
+                    <img src="{{ comment.authorThumbnail }}" alt="{{ comment.author }}" class="comment-avatar">
+                    <div class="comment-content">
+                        <div class="comment-header">
+                            <a href="/channel/{{ comment.authorId }}" class="comment-author">{{ comment.author }}</a>
+                            <span class="comment-date">{{ comment.published }}</span>
+                        </div>
+                        <div class="comment-text">{{ comment.content|safe }}</div>
+                        <div class="comment-actions">
+                            <span class="comment-likes">👍 {{ comment.likes }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <p class="no-comments">コメントはありません</p>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <aside class="watch-sidebar">
+        {% if playlist_id and playlist_videos %}
+        <div class="playlist-sidebar">
+            <div class="playlist-header-sidebar">
+                <h3 class="sidebar-title">📋 {{ playlist_title }}</h3>
+                <p class="playlist-progress">{{ playlist_index + 1 }} / {{ playlist_videos|length }}</p>
+            </div>
+            <div class="playlist-videos-sidebar">
+                {% for pv in playlist_videos %}
+                <a href="/{{ 'watch' if mode == 'stream' else ('w' if mode == 'high' else ('ume' if mode == 'embed' else 'edu')) }}?v={{ pv.id }}&list={{ playlist_id }}&index={{ loop.index0 }}" 
+                   class="playlist-item {% if loop.index0 == playlist_index %}active{% endif %}">
+                    <span class="playlist-item-index">{{ loop.index }}</span>
+                    <div class="playlist-item-thumbnail">
+                        <img src="/thumbnail?v={{ pv.id }}" alt="{{ pv.title }}" loading="lazy">
+                        {% if pv.length %}
+                        <span class="video-duration">{{ pv.length }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="playlist-item-info">
+                        <span class="playlist-item-title">{{ pv.title }}</span>
+                        <span class="playlist-item-author">{{ pv.author }}</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="sidebar-header-with-toggle">
+            <h3 class="sidebar-title" id="sidebarTitle">関連動画</h3>
+            <button id="chatToggleBtn" class="chat-toggle-btn" title="チャットに切り替える">💬 チャット</button>
+        </div>
+        <div class="related-videos" id="relatedVideosContainer">
+            {% if video and video.related %}
+            {% for related in video.related %}
+            <a href="/{{ 'watch' if mode == 'stream' else ('w' if mode == 'high' else ('ume' if mode == 'embed' else 'edu')) }}?v={{ related.id }}" class="related-card dynamic-related-link" data-video-id="{{ related.id }}">
+                <div class="related-thumbnail-container">
+                    <img src="/thumbnail?v={{ related.id }}" alt="{{ related.title }}" class="related-thumbnail" loading="lazy">
+                    {% if related.length %}
+                    <span class="video-duration">{{ related.length }}</span>
+                    {% endif %}
+                </div>
+                <div class="related-info">
+                    <h4 class="related-title">{{ related.title }}</h4>
+                    <a href="/channel/{{ related.authorId }}" class="related-author">{{ related.author }}</a>
+                    <p class="related-views">{{ related.views }}</p>
+                </div>
+            </a>
+            {% endfor %}
+            {% endif %}
+        </div>
+        <div class="chat-container" id="chatContainer" style="display:none;">
+            <iframe src="/chat" class="chat-iframe" style="width:100%; height:500px; border:none; border-radius:8px;"></iframe>
+        </div>
+    </aside>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.12/dist/hls.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const videoId = '{{ video_id }}';
+    const m3u8Url = '{{ streams.m3u8|default("", true) }}';
+    const mode = '{{ mode }}';
+
+    const video = document.getElementById('video-player');
+    let retryCount = 0;
+    const maxRetries = 3;
+    let errorTimeout = null;
+    let hasPlayedSuccessfully = false;
+    let isRetrying = false;
+    let fallbackShown = false;
+    let hlsInstance = null;
+    let stalledTimeout = null;
+    let initialLoadTimeout = null;
+
+    function showReloadNotification(message) {
+        let notification = document.getElementById('reload-notification');
+        if (!notification) {
+            notification = document.createElement('div');
+            notification.id = 'reload-notification';
+            notification.style.cssText = 'position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: rgba(139, 69, 19, 0.95); color: white; padding: 16px 24px; border-radius: 8px; z-index: 9999; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 12px;';
+            document.body.appendChild(notification);
+        }
+        notification.innerHTML = '<span style="animation: spin 1s linear infinite; display: inline-block;">🔄</span> ' + message;
+        notification.style.display = 'flex';
+        
+        if (!document.querySelector('style[data-reload-animation]')) {
+            const style = document.createElement('style');
+            style.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
+            style.setAttribute('data-reload-animation', 'true');
+            document.head.appendChild(style);
+        }
+    }
+
+    function hideReloadNotification() {
+        const notification = document.getElementById('reload-notification');
+        if (notification) {
+            notification.style.display = 'none';
+        }
+    }
+
+    function clearAllTimeouts() {
+        clearTimeout(errorTimeout);
+        clearTimeout(stalledTimeout);
+        clearTimeout(initialLoadTimeout);
+        errorTimeout = null;
+        stalledTimeout = null;
+        initialLoadTimeout = null;
+    }
+
+    function resetRetryState() {
+        retryCount = 0;
+        isRetrying = false;
+        clearAllTimeouts();
+        hideReloadNotification();
+    }
+
+    function destroyHlsInstance() {
+        if (hlsInstance) {
+            hlsInstance.destroy();
+            hlsInstance = null;
+        }
+    }
+
+    function handleVideoError() {
+        if (hasPlayedSuccessfully || isRetrying || fallbackShown) return;
+        
+        isRetrying = true;
+        clearAllTimeouts();
+        retryCount++;
+        
+        if (retryCount <= maxRetries) {
+            showReloadNotification('再生エラー発生... 再読み込み中 (' + retryCount + '/' + maxRetries + ')');
+            
+            errorTimeout = setTimeout(function() {
+                isRetrying = false;
+                
+                if (video) {
+                    destroyHlsInstance();
+                    
+                    if (m3u8Url && Hls.isSupported()) {
+                        initHls();
+                    } else {
+                        const sources = video.querySelectorAll('source');
+                        if (sources.length > 0) {
+                            video.load();
+                            video.play().catch(function() {});
+                        } else if (video.src) {
+                            const currentSrc = video.src;
+                            video.src = '';
+                            video.src = currentSrc;
+                            video.load();
+                            video.play().catch(function() {});
+                        }
+                    }
+                }
+            }, 2000);
+        } else {
+            isRetrying = false;
+            hideReloadNotification();
+            showFallbackOptions();
+        }
+    }
+
+    function showFallbackOptions() {
+        if (fallbackShown) return;
+        fallbackShown = true;
+        
+        let fallbackDiv = document.getElementById('fallback-options');
+        if (fallbackDiv) {
+            fallbackDiv.remove();
+        }
+        
+        fallbackDiv = document.createElement('div');
+        fallbackDiv.id = 'fallback-options';
+        fallbackDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--bg-card, #1a1a2e); border: 1px solid var(--border-color, #2a2a4a); padding: 24px; border-radius: 12px; z-index: 9999; text-align: center; max-width: 400px;';
+        
+        const title = document.createElement('h3');
+        title.style.cssText = 'margin-bottom: 16px; color: var(--text-primary, #fff);';
+        title.textContent = '再生に失敗しました';
+        fallbackDiv.appendChild(title);
+        
+        const description = document.createElement('p');
+        description.style.cssText = 'margin-bottom: 20px; color: var(--text-secondary, #b8b8c8);';
+        description.textContent = '別のモードで再生をお試しください';
+        fallbackDiv.appendChild(description);
+        
+        const buttonContainer = document.createElement('div');
+        buttonContainer.style.cssText = 'display: flex; flex-direction: column; gap: 12px;';
+        
+        const buttonStyle = 'padding: 12px 24px; background: #8b4513; color: white; text-decoration: none; border-radius: 8px; display: block;';
+        
+        if (mode !== 'embed') {
+            const embedLink = document.createElement('a');
+            embedLink.href = '/ume?v=' + videoId;
+            embedLink.style.cssText = buttonStyle;
+            embedLink.textContent = '🔗 埋め込みモードで再生';
+            buttonContainer.appendChild(embedLink);
+        }
+        if (mode !== 'education') {
+            const eduLink = document.createElement('a');
+            eduLink.href = '/edu?v=' + videoId;
+            eduLink.style.cssText = buttonStyle;
+            eduLink.textContent = '🎓 Educationモードで再生';
+            buttonContainer.appendChild(eduLink);
+        }
+        if (mode !== 'stream') {
+            const streamLink = document.createElement('a');
+            streamLink.href = '/watch?v=' + videoId;
+            streamLink.style.cssText = buttonStyle;
+            streamLink.textContent = '🎬 ストリームモードで再生';
+            buttonContainer.appendChild(streamLink);
+        }
+        
+        const reloadBtn = document.createElement('button');
+        reloadBtn.style.cssText = 'padding: 12px 24px; background: var(--bg-secondary, #16213e); border: 1px solid var(--border-color, #2a2a4a); color: var(--text-primary, #fff); border-radius: 8px; cursor: pointer;';
+        reloadBtn.textContent = '🔄 ページを再読み込み';
+        reloadBtn.addEventListener('click', function() { location.reload(); });
+        buttonContainer.appendChild(reloadBtn);
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.style.cssText = 'padding: 8px 16px; background: transparent; border: none; color: var(--text-secondary, #b8b8c8); cursor: pointer;';
+        closeBtn.textContent = '閉じる';
+        closeBtn.addEventListener('click', function() {
+            fallbackDiv.style.display = 'none';
+        });
+        buttonContainer.appendChild(closeBtn);
+        
+        fallbackDiv.appendChild(buttonContainer);
+        document.body.appendChild(fallbackDiv);
+    }
+
+    function initHls() {
+        if (!video || !m3u8Url) return;
+        
+        destroyHlsInstance();
+        
+        hlsInstance = new Hls({
+            maxBufferLength: 30,
+            maxMaxBufferLength: 60,
+            startLevel: -1
+        });
+        hlsInstance.loadSource(m3u8Url);
+        hlsInstance.attachMedia(video);
+        
+        hlsInstance.on(Hls.Events.ERROR, function(event, data) {
+            if (data.fatal) {
+                destroyHlsInstance();
+                handleVideoError();
+            }
+        });
+        
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
+            video.play().catch(function() {});
+        });
+    }
+
+    if (video && m3u8Url && !video.querySelector('source')) {
+        if (Hls.isSupported()) {
+            initHls();
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = m3u8Url;
+        }
+    }
+
+    if (video) {
+        video.addEventListener('error', function(e) {
+            console.log('Video error:', e);
+            handleVideoError();
+        });
+        
+        video.addEventListener('stalled', function() {
+            console.log('Video stalled');
+            if (!hasPlayedSuccessfully && !isRetrying && video.currentTime < 1) {
+                clearTimeout(stalledTimeout);
+                stalledTimeout = setTimeout(function() {
+                    if (!hasPlayedSuccessfully && !isRetrying && video.currentTime < 1 && video.readyState < 3) {
+                        handleVideoError();
+                    }
+                }, 8000);
+            }
+        });
+        
+        video.addEventListener('playing', function() {
+            hasPlayedSuccessfully = true;
+            resetRetryState();
+        });
+        
+        video.addEventListener('canplay', function() {
+            hideReloadNotification();
+            clearTimeout(stalledTimeout);
+            clearTimeout(initialLoadTimeout);
+        });
+        
+        initialLoadTimeout = setTimeout(function() {
+            if (video && !hasPlayedSuccessfully && !isRetrying && video.readyState < 2) {
+                handleVideoError();
+            }
+        }, 10000);
+    }
+
+    const descToggle = document.getElementById('desc-toggle');
+    const description = document.getElementById('description');
+    if (descToggle && description) {
+        descToggle.addEventListener('click', function() {
+            description.classList.toggle('expanded');
+            this.textContent = description.classList.contains('expanded') ? '閉じる' : 'もっと見る';
+        });
+    }
+
+    const loopToggle = document.getElementById('loopToggle');
+    const autoNextToggle = document.getElementById('autoNextToggle');
+
+    function getCookie(name) {
+        const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+        return v ? decodeURIComponent(v.pop()) : null;
+    }
+
+    function setCookie(name, value, days) {
+        const d = new Date();
+        d.setTime(d.getTime() + (days || 30) * 24 * 60 * 60 * 1000);
+        document.cookie = name + '=' + encodeURIComponent(value) + ';expires=' + d.toUTCString() + ';path=/';
+    }
+
+    if (loopToggle && video) {
+        loopToggle.checked = getCookie('loop') === 'true';
+        video.loop = loopToggle.checked;
+
+        loopToggle.addEventListener('change', function() {
+            video.loop = this.checked;
+            setCookie('loop', this.checked, 30);
+        });
+    }
+
+    if (autoNextToggle) {
+        autoNextToggle.checked = getCookie('autonext') === 'true';
+
+        autoNextToggle.addEventListener('change', function() {
+            setCookie('autonext', this.checked, 30);
+        });
+    }
+
+    const playlistId = '{{ playlist_id|default("", true) }}';
+    const playlistIndex = {{ playlist_index|default(0, true) }};
+    const playlistLength = {{ playlist_videos|length if playlist_videos else 0 }};
+    const playlistVideos = [
+        {% if playlist_videos %}
+        {% for pv in playlist_videos %}
+        { id: '{{ pv.id }}', title: '{{ pv.title|replace("'", "\\'") }}' }{% if not loop.last %},{% endif %}
+        {% endfor %}
+        {% endif %}
+    ];
+
+    if (video) {
+        video.addEventListener('ended', function() {
+            if (playlistId && playlistIndex < playlistLength - 1) {
+                const nextIndex = playlistIndex + 1;
+                const nextVideo = playlistVideos[nextIndex];
+                if (nextVideo) {
+                    showNextVideoNotification(nextVideo.title);
+                    setTimeout(function() {
+                        window.location.href = '/{{ "watch" if mode == "stream" else ("w" if mode == "high" else ("ume" if mode == "embed" else "edu")) }}?v=' + nextVideo.id + '&list=' + playlistId + '&index=' + nextIndex;
+                    }, 3000);
+                }
+            } else if (getCookie('autonext') === 'true') {
+                {% if video and video.related and video.related|length > 0 %}
+                setTimeout(function() {
+                    window.location.href = '/watch?v={{ video.related[0].id }}';
+                }, 3000);
+                {% endif %}
+            }
+        });
+    }
+
+    function showNextVideoNotification(title) {
+        let notification = document.getElementById('next-video-notification');
+        if (!notification) {
+            notification = document.createElement('div');
+            notification.id = 'next-video-notification';
+            notification.style.cssText = 'position: fixed; bottom: 100px; right: 20px; background: rgba(0, 0, 0, 0.9); color: white; padding: 16px 24px; border-radius: 12px; z-index: 9999; max-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);';
+            document.body.appendChild(notification);
+        }
+        notification.innerHTML = '<p style="margin: 0 0 8px 0; font-size: 12px; color: #aaa;">次の動画 (3秒後)</p><p style="margin: 0; font-size: 14px; font-weight: 500;">' + title + '</p>';
+        notification.style.display = 'block';
+    }
+
+    const resolutionSelect = document.getElementById('resolutionSelect');
+    if (resolutionSelect && video) {
+        resolutionSelect.addEventListener('change', function() {
+            const currentTime = video.currentTime;
+            const isPaused = video.paused;
+
+            video.src = this.value;
+            video.currentTime = currentTime;
+            if (!isPaused) {
+                video.play();
+            }
+        });
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        if (video && (e.keyCode === 32 || e.keyCode === 75)) {
+            e.preventDefault();
+            if (video.paused) {
+                video.play();
+            } else {
+                video.pause();
+            }
+        }
+    });
+
+    (function saveToHistory() {
+        var videoId = '{{ video_id }}';
+        var videoTitle = '{{ video.title|default("", true)|replace("'", "\\'")|replace('"', '\\"') }}';
+        var videoAuthor = '{{ video.author|default("", true)|replace("'", "\\'")|replace('"', '\\"') }}';
+        
+        if (!videoId || !videoTitle) return;
+        
+        var history = JSON.parse(localStorage.getItem('chocoHistory') || '[]');
+        
+        history = history.filter(function(item) {
+            return item.id !== videoId;
+        });
+        
+        var now = new Date();
+        var watchedAt = now.getFullYear() + '/' + 
+                        String(now.getMonth() + 1).padStart(2, '0') + '/' + 
+                        String(now.getDate()).padStart(2, '0') + ' ' + 
+                        String(now.getHours()).padStart(2, '0') + ':' + 
+                        String(now.getMinutes()).padStart(2, '0');
+        
+        history.unshift({
+            id: videoId,
+            title: videoTitle,
+            author: videoAuthor,
+            watchedAt: watchedAt
+        });
+        
+        if (history.length > 100) {
+            history = history.slice(0, 100);
+        }
+        
+        localStorage.setItem('chocoHistory', JSON.stringify(history));
+    })();
+
+    (function initFavoriteButton() {
+        var favoriteBtn = document.getElementById('favoriteBtn');
+        if (!favoriteBtn) return;
+        
+        var videoId = favoriteBtn.getAttribute('data-video-id');
+        var videoTitle = favoriteBtn.getAttribute('data-video-title');
+        var videoAuthor = favoriteBtn.getAttribute('data-video-author');
+        
+        function updateButtonState() {
+            var favorites = JSON.parse(localStorage.getItem('chocoFavorites') || '[]');
+            var isFavorite = favorites.some(function(item) { return item.id === videoId; });
+            
+            if (isFavorite) {
+                favoriteBtn.innerHTML = '<span class="favorite-icon">★</span> お気に入り済み';
+                favoriteBtn.classList.add('favorited');
+            } else {
+                favoriteBtn.innerHTML = '<span class="favorite-icon">☆</span> お気に入りに追加';
+                favoriteBtn.classList.remove('favorited');
+            }
+        }
+        
+        favoriteBtn.addEventListener('click', function() {
+            var favorites = JSON.parse(localStorage.getItem('chocoFavorites') || '[]');
+            var isFavorite = favorites.some(function(item) { return item.id === videoId; });
+            
+            if (isFavorite) {
+                favorites = favorites.filter(function(item) { return item.id !== videoId; });
+            } else {
+                var now = new Date();
+                var addedAt = now.getFullYear() + '/' + 
+                              String(now.getMonth() + 1).padStart(2, '0') + '/' + 
+                              String(now.getDate()).padStart(2, '0') + ' ' + 
+                              String(now.getHours()).padStart(2, '0') + ':' + 
+                              String(now.getMinutes()).padStart(2, '0');
+                
+                favorites.unshift({
+                    id: videoId,
+                    title: videoTitle,
+                    author: videoAuthor,
+                    addedAt: addedAt
+                });
+                
+                if (favorites.length > 100) {
+                    favorites = favorites.slice(0, 100);
+                }
+            }
+            
+            localStorage.setItem('chocoFavorites', JSON.stringify(favorites));
+            updateButtonState();
+        });
+        
+        updateButtonState();
+    })();
+
+    (function initEduSourceSelector() {
+        var eduSourceSelect = document.getElementById('eduSourceSelect');
+        if (!eduSourceSelect) return;
+
+        function setCookie(name, value, days) {
+            var d = new Date();
+            d.setTime(d.getTime() + (days || 30) * 24 * 60 * 60 * 1000);
+            document.cookie = name + '=' + encodeURIComponent(value) + ';expires=' + d.toUTCString() + ';path=/';
+        }
+
+        eduSourceSelect.addEventListener('change', function() {
+            setCookie('edu_source', this.value, 30);
+            window.location.reload();
+        });
+    })();
+
+    (function initChannelSubscribe() {
+        const subscribeBtn = document.getElementById('subscribeBtn');
+        if (!subscribeBtn) return;
+
+        function getSubscribedChannels() {
+            try {
+                return JSON.parse(localStorage.getItem('subscribedChannels') || '[]');
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function updateSubscribeButton() {
+            const channels = getSubscribedChannels();
+            const channelId = subscribeBtn.getAttribute('data-channel-id');
+            const isSubscribed = channels.some(ch => ch.id === channelId);
+
+            if (isSubscribed) {
+                subscribeBtn.classList.add('subscribed');
+                subscribeBtn.innerHTML = '<span class="subscribe-icon">✓</span> 登録済み';
+                subscribeBtn.title = '登録を解除';
+            } else {
+                subscribeBtn.classList.remove('subscribed');
+                subscribeBtn.innerHTML = '<span class="subscribe-icon">🔔</span> 登録';
+                subscribeBtn.title = 'チャンネル登録';
+            }
+        }
+
+        subscribeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const channelId = this.getAttribute('data-channel-id');
+            const channelName = this.getAttribute('data-channel-name');
+            let channels = getSubscribedChannels();
+            
+            const existingIndex = channels.findIndex(ch => ch.id === channelId);
+            
+            if (existingIndex >= 0) {
+                channels.splice(existingIndex, 1);
+            } else {
+                channels.push({
+                    id: channelId,
+                    name: channelName,
+                    subscribedAt: new Date().toISOString()
+                });
+            }
+            
+            localStorage.setItem('subscribedChannels', JSON.stringify(channels));
+            updateSubscribeButton();
+        });
+
+        updateSubscribeButton();
+    })();
+
+    // Chat toggle functionality
+    (function() {
+        const chatToggleBtn = document.getElementById('chatToggleBtn');
+        const relatedVideosContainer = document.getElementById('relatedVideosContainer');
+        const chatContainer = document.getElementById('chatContainer');
+        const sidebarTitle = document.getElementById('sidebarTitle');
+        
+        if (chatToggleBtn) {
+            let isChatMode = false;
+            
+            chatToggleBtn.addEventListener('click', function() {
+                isChatMode = !isChatMode;
+                
+                if (isChatMode) {
+                    relatedVideosContainer.style.display = 'none';
+                    chatContainer.style.display = 'block';
+                    sidebarTitle.textContent = 'チャット';
+                    chatToggleBtn.classList.add('active');
+                } else {
+                    relatedVideosContainer.style.display = 'block';
+                    chatContainer.style.display = 'none';
+                    sidebarTitle.textContent = '関連動画';
+                    chatToggleBtn.classList.remove('active');
+                }
+            });
+        }
+    })();
+});
+</script>
+{% endblock %}
