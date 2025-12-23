@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+
+{% block title %}{{ channel.channelName if channel else 'チャンネル' }} - チョコTube{% endblock %}
+
+{% block content %}
+<div class="channel-container">
+    {% if channel %}
+    <div class="channel-header">
+        {% if channel.authorBanner %}
+        <div class="channel-banner" style="background-image: url('{{ channel.authorBanner }}');"></div>
+        {% else %}
+        <div class="channel-banner channel-banner-default"></div>
+        {% endif %}
+        <div class="channel-profile">
+            {% if channel.channelIcon %}
+            <img src="{{ channel.channelIcon }}" alt="{{ channel.channelName }}" class="channel-icon">
+            {% else %}
+            <div class="channel-icon-placeholder">{{ channel.channelName[:1] }}</div>
+            {% endif %}
+            <div class="channel-info-main">
+                <h1 class="channel-name-large">{{ channel.channelName }}</h1>
+                <div class="channel-stats">
+                    <span class="channel-handle">@{{ channel.channelName|replace(" ", "") }}</span>
+                    <span class="channel-subscribers">チャンネル登録者数 {{ channel.subscribers }}人</span>
+                    <span class="channel-video-count">{{ videos|length }}本の動画</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="channel-tabs">
+        <button class="channel-tab active" data-tab="videos">動画</button>
+        <button class="channel-tab" data-tab="about">概要</button>
+    </div>
+
+    <div class="channel-tab-content" id="tab-videos">
+        <div class="video-grid" id="video-grid">
+            {% for video in videos %}
+            <a href="/watch?v={{ video.id }}" class="video-card dynamic-video-link" data-video-id="{{ video.id }}">
+                <div class="thumbnail-container">
+                    <img src="/thumbnail?v={{ video.id }}" alt="{{ video.title }}" class="thumbnail" loading="lazy">
+                    {% if video.length %}
+                    <span class="video-duration">{{ video.length }}</span>
+                    {% endif %}
+                </div>
+                <div class="video-info">
+                    <h3 class="video-title">{{ video.title }}</h3>
+                    <p class="video-meta">
+                        <span>{{ video.views }}</span>
+                        {% if video.published %}
+                        <span class="separator">•</span>
+                        <span>{{ video.published }}</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </a>
+            {% else %}
+            <div class="no-videos">
+                <p>動画が見つかりませんでした。</p>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="load-more-container" id="load-more-container">
+            <button class="load-more-btn" id="load-more-btn">もっと読み込む</button>
+            <div class="loading-spinner hidden" id="loading-spinner">
+                <span>読み込み中...</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="channel-tab-content hidden" id="tab-about">
+        <div class="about-section">
+            <div class="about-card">
+                <h3>説明</h3>
+                {% if channel.channelProfile %}
+                <div class="about-description">{{ channel.channelProfile|safe }}</div>
+                {% else %}
+                <p class="no-description">説明はありません</p>
+                {% endif %}
+            </div>
+
+            <div class="about-card">
+                <h3>詳細</h3>
+                <div class="about-details">
+                    <div class="detail-item">
+                        <span class="detail-label">チャンネル登録者数</span>
+                        <span class="detail-value">{{ channel.subscribers }}人</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">動画数</span>
+                        <span class="detail-value">{{ videos|length }}本</span>
+                    </div>
+                </div>
+            </div>
+
+            {% if channel.tags %}
+            <div class="about-card">
+                <h3>タグ</h3>
+                <div class="channel-tags">
+                    {% for tag in channel.tags %}
+                    <a href="/search?q={{ tag }}" class="tag">{{ tag }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="channel-not-found">
+        <h2>チャンネルが見つかりませんでした</h2>
+        <p>このチャンネルは存在しないか、読み込みに失敗しました。</p>
+        <a href="/" class="back-home-btn">ホームに戻る</a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.load-more-container {
+    text-align: center;
+    padding: 24px;
+    margin-top: 16px;
+}
+
+.load-more-btn {
+    padding: 12px 32px;
+    background: var(--accent-primary);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+}
+
+.load-more-btn:hover {
+    background: var(--accent-secondary);
+    transform: translateY(-2px);
+}
+
+.load-more-btn:disabled {
+    background: var(--bg-secondary);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.loading-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--text-secondary);
+}
+
+.loading-spinner span {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+.hidden {
+    display: none !important;
+}
+
+.no-more-videos {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('.channel-tab');
+    const contents = document.querySelectorAll('.channel-tab-content');
+
+    tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            const targetId = 'tab-' + this.getAttribute('data-tab');
+
+            tabs.forEach(function(t) { t.classList.remove('active'); });
+            contents.forEach(function(c) { c.classList.add('hidden'); });
+
+            this.classList.add('active');
+            document.getElementById(targetId).classList.remove('hidden');
+        });
+    });
+
+    const channelId = '{{ channel_id }}';
+    const videoGrid = document.getElementById('video-grid');
+    const loadMoreBtn = document.getElementById('load-more-btn');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const loadMoreContainer = document.getElementById('load-more-container');
+    let continuation = '{{ continuation|default("", true) }}';
+    let isLoading = false;
+    const totalVideos = {{ total_videos|default(0, true) }};
+    let loadedCount = {{ videos|length }};
+    
+    if (!continuation && totalVideos > 0 && loadedCount >= totalVideos && loadMoreBtn) {
+        loadMoreContainer.innerHTML = '<p class="no-more-videos">すべての動画を読み込みました (' + loadedCount + '本)</p>';
+    } else if (!continuation && loadedCount > 0 && loadMoreBtn) {
+        loadMoreBtn.textContent = 'もっと読み込む';
+    }
+
+    function getCookie(name) {
+        const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+        return v ? decodeURIComponent(v.pop()) : null;
+    }
+
+    function getVideoPath() {
+        const vc = getCookie('vc') || '1';
+        switch(vc) {
+            case '1': return '/watch';
+            case '2': return '/w';
+            case '3': return '/ume';
+            default: return '/edu';
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function createVideoCard(video) {
+        const path = getVideoPath();
+        const a = document.createElement('a');
+        a.href = path + '?v=' + video.id;
+        a.className = 'video-card';
+        
+        let durationHtml = '';
+        if (video.length) {
+            durationHtml = '<span class="video-duration">' + escapeHtml(video.length) + '</span>';
+        }
+        
+        let metaHtml = '<span>' + escapeHtml(video.views || '') + '</span>';
+        if (video.published) {
+            metaHtml += '<span class="separator">•</span><span>' + escapeHtml(video.published) + '</span>';
+        }
+        
+        a.innerHTML = 
+            '<div class="thumbnail-container">' +
+                '<img src="/thumbnail?v=' + video.id + '" alt="' + escapeHtml(video.title) + '" class="thumbnail" loading="lazy">' +
+                durationHtml +
+            '</div>' +
+            '<div class="video-info">' +
+                '<h3 class="video-title">' + escapeHtml(video.title) + '</h3>' +
+                '<p class="video-meta">' + metaHtml + '</p>' +
+            '</div>';
+        
+        return a;
+    }
+
+    function loadMoreVideos() {
+        if (isLoading) return;
+        isLoading = true;
+        
+        loadMoreBtn.classList.add('hidden');
+        loadingSpinner.classList.remove('hidden');
+        
+        let url = '/api/channel/' + encodeURIComponent(channelId) + '/videos';
+        if (continuation) {
+            url += '?continuation=' + encodeURIComponent(continuation);
+        }
+        
+        fetch(url)
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                const videos = data.videos || [];
+                continuation = data.continuation || '';
+                
+                videos.forEach(function(video) {
+                    const card = createVideoCard(video);
+                    videoGrid.appendChild(card);
+                    loadedCount++;
+                });
+                
+                if (continuation && videos.length > 0) {
+                    loadMoreBtn.textContent = 'もっと読み込む';
+                    loadMoreBtn.classList.remove('hidden');
+                } else if (videos.length === 0 && totalVideos > 0 && loadedCount >= totalVideos) {
+                    loadMoreContainer.innerHTML = '<p class="no-more-videos">すべての動画を読み込みました (' + loadedCount + '本)</p>';
+                } else if (videos.length === 0) {
+                    loadMoreContainer.innerHTML = '<p class="no-more-videos">これ以上動画はありません (' + loadedCount + '本)</p>';
+                } else {
+                    loadMoreBtn.textContent = 'もっと読み込む';
+                    loadMoreBtn.classList.remove('hidden');
+                }
+                
+                isLoading = false;
+                loadingSpinner.classList.add('hidden');
+            })
+            .catch(function(err) {
+                console.error('Error loading videos:', err);
+                loadMoreBtn.textContent = 'もっと読み込む (エラー: 再試行)';
+                loadMoreBtn.classList.remove('hidden');
+                loadingSpinner.classList.add('hidden');
+                isLoading = false;
+            });
+    }
+
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', loadMoreVideos);
+    }
+    
+    const vc = getCookie('vc') || '1';
+    const initialLinks = document.querySelectorAll('a.dynamic-video-link');
+    initialLinks.forEach(function(a) {
+        const videoId = a.getAttribute('data-video-id');
+        if (videoId) {
+            a.href = getVideoPath() + '?v=' + videoId;
+        }
+    });
+});
+</script>
+{% endblock %}
