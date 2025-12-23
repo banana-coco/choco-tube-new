@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+
+{% block title %}{{ playlist.title if playlist else 'プレイリスト' }} - チョコTube{% endblock %}
+
+{% block content %}
+<div class="playlist-container">
+    {% if playlist %}
+    <div class="playlist-header">
+        <div class="playlist-info-main">
+            <div class="playlist-icon">📋</div>
+            <div class="playlist-details">
+                <h1 class="playlist-title">{{ playlist.title }}</h1>
+                <a href="/channel/{{ playlist.authorId }}" class="playlist-author">{{ playlist.author }}</a>
+                <div class="playlist-meta">
+                    <span>{{ playlist.videoCount }} 本の動画</span>
+                    {% if playlist.viewCount %}
+                    <span class="separator">•</span>
+                    <span>{{ playlist.viewCount }} 回視聴</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% if playlist.description %}
+        <div class="playlist-description">
+            {{ playlist.description }}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="playlist-actions">
+        {% if videos and videos|length > 0 %}
+        <a href="/watch?v={{ videos[0].id }}&list={{ playlist.id if playlist else request.args.get('list', '') }}&index=0" class="play-all-btn dynamic-play-all" data-video-id="{{ videos[0].id }}" data-list-id="{{ playlist.id if playlist else request.args.get('list', '') }}">
+            ▶️ 最初から再生
+        </a>
+        {% endif %}
+    </div>
+
+    <section class="playlist-videos-section">
+        <h2 class="section-title">動画一覧</h2>
+        <div class="playlist-videos">
+            {% for video in videos %}
+            <a href="/watch?v={{ video.id }}&list={{ playlist.id }}&index={{ loop.index0 }}" class="playlist-video-card dynamic-video-link" data-video-id="{{ video.id }}" data-list-id="{{ playlist.id }}" data-index="{{ loop.index0 }}">
+                <div class="playlist-video-index">{{ loop.index }}</div>
+                <div class="playlist-thumbnail-container">
+                    <img src="/thumbnail?v={{ video.id }}" alt="{{ video.title }}" class="playlist-thumbnail" loading="lazy">
+                    {% if video.length %}
+                    <span class="video-duration">{{ video.length }}</span>
+                    {% endif %}
+                </div>
+                <div class="playlist-video-info">
+                    <h3 class="playlist-video-title">{{ video.title }}</h3>
+                    <a href="/channel/{{ video.authorId }}" class="playlist-video-author" onclick="event.stopPropagation();">{{ video.author }}</a>
+                </div>
+            </a>
+            {% else %}
+            <div class="no-videos">
+                <p>動画が見つかりませんでした。</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% else %}
+    <div class="playlist-not-found">
+        <h2>プレイリストが見つかりませんでした</h2>
+        <p>このプレイリストは存在しないか、読み込みに失敗しました。</p>
+        <a href="/" class="back-home-btn">ホームに戻る</a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.playlist-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.playlist-header {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.playlist-info-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.playlist-icon {
+    font-size: 48px;
+    background: var(--bg-secondary);
+    padding: 16px;
+    border-radius: 12px;
+}
+
+.playlist-details {
+    flex: 1;
+}
+
+.playlist-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.playlist-author {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 16px;
+    display: inline-block;
+    margin-bottom: 8px;
+}
+
+.playlist-author:hover {
+    color: var(--accent-light);
+}
+
+.playlist-meta {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.playlist-description {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.playlist-actions {
+    margin-bottom: 24px;
+}
+
+.play-all-btn {
+    display: inline-block;
+    padding: 12px 24px;
+    background: var(--accent-primary);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: background 0.3s;
+}
+
+.play-all-btn:hover {
+    background: var(--accent-secondary);
+}
+
+.playlist-videos-section {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.playlist-videos {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.playlist-video-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.3s;
+}
+
+.playlist-video-card:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="light"] .playlist-video-card:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.playlist-video-index {
+    font-size: 14px;
+    color: var(--text-secondary);
+    min-width: 32px;
+    text-align: center;
+}
+
+.playlist-thumbnail-container {
+    flex-shrink: 0;
+    width: 160px;
+    aspect-ratio: 16/9;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+}
+
+.playlist-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.playlist-video-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.playlist-video-title {
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 4px;
+    color: var(--text-primary);
+}
+
+.playlist-video-author {
+    color: var(--text-secondary);
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.playlist-video-author:hover {
+    color: var(--accent-light);
+}
+
+.playlist-not-found {
+    text-align: center;
+    padding: 48px;
+    background: var(--bg-card);
+    border-radius: 12px;
+}
+
+.playlist-not-found h2 {
+    margin-bottom: 16px;
+}
+
+.playlist-not-found p {
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+}
+
+.dynamic-video-link {
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .playlist-info-main {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .playlist-thumbnail-container {
+        width: 120px;
+    }
+
+    .playlist-video-card {
+        flex-wrap: wrap;
+    }
+
+    .playlist-video-index {
+        min-width: 24px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function getCookie(name) {
+        const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+        return v ? decodeURIComponent(v.pop()) : null;
+    }
+    
+    function vcToPath(vc) {
+        switch(vc) {
+            case '1': return '/watch';
+            case '2': return '/w';
+            case '3': return '/ume';
+            case '0': return '/edu';
+            default: return '/watch';
+        }
+    }
+    
+    const vc = getCookie('vc') || '1';
+    const basePath = vcToPath(vc);
+    
+    const playAllBtn = document.querySelector('.dynamic-play-all');
+    if (playAllBtn) {
+        const videoId = playAllBtn.getAttribute('data-video-id');
+        const listId = playAllBtn.getAttribute('data-list-id');
+        playAllBtn.href = basePath + '?v=' + videoId + '&list=' + listId + '&index=0';
+    }
+    
+    const videoLinks = document.querySelectorAll('a.dynamic-video-link');
+    videoLinks.forEach(function(a) {
+        const videoId = a.getAttribute('data-video-id');
+        const listId = a.getAttribute('data-list-id');
+        const index = a.getAttribute('data-index');
+        if (videoId && listId !== null) {
+            a.href = basePath + '?v=' + videoId + '&list=' + listId + '&index=' + index;
+        }
+    });
+});
+</script>
+{% endblock %}
