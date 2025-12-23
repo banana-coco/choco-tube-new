@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}{{ query }} - チョコTube検索{% endblock %}
+
+{% block content %}
+<div class="search-container">
+    {% if query %}
+    <h2 class="search-results-title">「{{ query }}」の検索結果</h2>
+    {% endif %}
+
+    <div class="settings-bar">
+        <div class="settings-item">
+            <label for="vcSelect">再生モード:</label>
+            <select id="vcSelect">
+                <option value="1" {% if vc == '1' %}selected{% endif %}>ストリーム再生</option>
+                <option value="2" {% if vc == '2' %}selected{% endif %}>高画質再生</option>
+                <option value="3" {% if vc == '3' %}selected{% endif %}>埋め込み (nocookie)</option>
+                <option value="0" {% if vc == '0' %}selected{% endif %}>Education</option>
+            </select>
+        </div>
+        <div class="settings-item">
+            <label for="searchModeSelect">検索モード:</label>
+            <select id="searchModeSelect">
+                <option value="youtube" {% if search_mode == 'youtube' %}selected{% endif %}>YouTube API → Invidious</option>
+                <option value="invidious" {% if search_mode == 'invidious' %}selected{% endif %}>Invidious → YouTube API</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="search-results">
+        {% for result in results %}
+            {% if result.type == 'video' %}
+            <a href="{{ '/watch' if vc == '1' else ('/w' if vc == '2' else ('/ume' if vc == '3' else '/edu')) }}?v={{ result.id }}" class="search-result-card dynamic-link" data-video-id="{{ result.id }}">
+                <div class="result-thumbnail-container">
+                    <img src="/thumbnail?v={{ result.id }}" alt="{{ result.title }}" class="result-thumbnail" loading="lazy">
+                    {% if result.length %}
+                    <span class="video-duration">{{ result.length }}</span>
+                    {% endif %}
+                </div>
+                <div class="result-info">
+                    <h3 class="result-title">{{ result.title }}</h3>
+                    <div class="result-meta">
+                        <a href="/channel/{{ result.authorId }}" class="result-author" onclick="event.stopPropagation();">{{ result.author }}</a>
+                        {% if result.views %}
+                        <span class="separator">•</span>
+                        <span>{{ result.views }}</span>
+                        {% endif %}
+                        {% if result.published %}
+                        <span class="separator">•</span>
+                        <span>{{ result.published }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+            {% elif result.type == 'channel' %}
+            <a href="/channel/{{ result.id }}" class="search-result-card channel-card">
+                <div class="channel-thumbnail-container">
+                    <img src="{{ result.thumbnail }}" alt="{{ result.author }}" class="channel-thumbnail" loading="lazy">
+                </div>
+                <div class="result-info">
+                    <h3 class="result-title">{{ result.author }}</h3>
+                    <p class="result-meta">チャンネル</p>
+                </div>
+            </a>
+            {% elif result.type == 'playlist' %}
+            <a href="/playlist?list={{ result.id }}" class="search-result-card playlist-card">
+                <div class="result-thumbnail-container">
+                    <img src="{{ result.thumbnail }}" alt="{{ result.title }}" class="result-thumbnail" loading="lazy">
+                    <span class="playlist-count">{{ result.count }}本の動画</span>
+                </div>
+                <div class="result-info">
+                    <h3 class="result-title">{{ result.title }}</h3>
+                    <p class="result-meta">プレイリスト</p>
+                </div>
+            </a>
+            {% endif %}
+        {% else %}
+        <div class="no-results">
+            {% if query %}
+            <p>「{{ query }}」に一致する動画が見つかりませんでした。</p>
+            {% else %}
+            <p>検索キーワードを入力してください。</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if results and next %}
+    <div class="pagination">
+        <a href="{{ next }}" class="next-page-btn">次のページ →</a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const vcSelect = document.getElementById('vcSelect');
+    const searchModeSelect = document.getElementById('searchModeSelect');
+
+    function getCookie(name) {
+        const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+        return v ? decodeURIComponent(v.pop()) : null;
+    }
+
+    function setCookie(name, value, days) {
+        const d = new Date();
+        d.setTime(d.getTime() + (days || 30) * 24 * 60 * 60 * 1000);
+        document.cookie = name + '=' + encodeURIComponent(value) + ';expires=' + d.toUTCString() + ';path=/';
+    }
+
+    function vcToPath(vc) {
+        switch(vc) {
+            case '1': return '/watch';
+            case '2': return '/w';
+            case '3': return '/ume';
+            default: return '/edu';
+        }
+    }
+
+    function updateLinks(vc) {
+        const links = document.querySelectorAll('a.dynamic-link');
+        links.forEach(function(a) {
+            const videoId = a.getAttribute('data-video-id');
+            if (videoId) {
+                a.href = vcToPath(vc) + '?v=' + videoId;
+            }
+        });
+    }
+
+    if (vcSelect) {
+        const savedVc = getCookie('vc');
+        if (savedVc) {
+            vcSelect.value = savedVc;
+            updateLinks(savedVc);
+        }
+
+        vcSelect.addEventListener('change', function() {
+            setCookie('vc', this.value, 30);
+            updateLinks(this.value);
+        });
+    }
+
+    if (searchModeSelect) {
+        const savedSearchMode = getCookie('search_mode');
+        if (savedSearchMode) {
+            searchModeSelect.value = savedSearchMode;
+        }
+
+        searchModeSelect.addEventListener('change', function() {
+            setCookie('search_mode', this.value, 30);
+            const currentUrl = new URL(window.location.href);
+            if (currentUrl.searchParams.get('q')) {
+                window.location.reload();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
