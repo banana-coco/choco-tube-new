@@ -47,10 +47,15 @@
   </style>
 </head>
 <body>
-  <div class="back-bar">
+  <div class="back-bar" id="backBar">
     <a href="/" class="back-btn">🍫 チョコTubeに戻る</a>
   </div>
-  <iframe src="https://bbs-be-ta2-bl9w.onrender.com" class="full-screen-iframe" frameborder="0"></iframe>
+  <iframe src="https://syh4cl-5000.csb.app/" class="full-screen-iframe" frameborder="0"></iframe>
+  <script>
+    // iframeから呼ばれている場合、戻るボタンを非表示にする
+    if (window.parent !== window) {
+      document.getElementById('backBar').style.display = 'none';
+    }
+  </script>
 </body>
 </html>
-(https://syh4cl-5000.csb.app/)
