@@ -760,6 +760,121 @@ document.addEventListener('DOMContentLoaded', function() {
         updateSubscribeButton();
     })();
 
+    // 関連動画リトライ機能
+    (function initRelatedVideosRetry() {
+        const relatedVideosContainer = document.getElementById('relatedVideosContainer');
+        if (!relatedVideosContainer) return;
+
+        let retryCount = 0;
+        const maxRetries = 10;
+        let retryTimeout = null;
+        let isLoading = false;
+
+        function showRetryStatus(message) {
+            let statusDiv = document.getElementById('related-retry-status');
+            if (!statusDiv) {
+                statusDiv = document.createElement('div');
+                statusDiv.id = 'related-retry-status';
+                statusDiv.style.cssText = 'padding: 12px; margin-bottom: 12px; background: rgba(139, 69, 19, 0.2); border-left: 3px solid #8b4513; border-radius: 4px; font-size: 12px; color: #daa520; text-align: center;';
+                relatedVideosContainer.parentNode.insertBefore(statusDiv, relatedVideosContainer);
+            }
+            statusDiv.innerHTML = message;
+            statusDiv.style.display = 'block';
+        }
+
+        function hideRetryStatus() {
+            const statusDiv = document.getElementById('related-retry-status');
+            if (statusDiv) {
+                statusDiv.style.display = 'none';
+            }
+        }
+
+        function renderRelatedVideos(relatedData, mode) {
+            relatedVideosContainer.innerHTML = '';
+            
+            if (!relatedData || relatedData.length === 0) {
+                relatedVideosContainer.innerHTML = '<p style="padding: 20px; text-align: center; color: #999;">関連動画がありません</p>';
+                hideRetryStatus();
+                return;
+            }
+
+            relatedData.forEach(function(related) {
+                const modePrefix = mode === 'stream' ? 'watch' : (mode === 'high' ? 'w' : (mode === 'embed' ? 'ume' : 'edu'));
+                const a = document.createElement('a');
+                a.href = '/' + modePrefix + '?v=' + related.id;
+                a.className = 'related-card dynamic-related-link';
+                a.setAttribute('data-video-id', related.id);
+                
+                a.innerHTML = 
+                    '<div class="related-thumbnail-container">' +
+                    '<img src="/thumbnail?v=' + related.id + '" alt="' + (related.title || '') + '" class="related-thumbnail" loading="lazy">' +
+                    (related.length ? '<span class="video-duration">' + related.length + '</span>' : '') +
+                    '</div>' +
+                    '<div class="related-info">' +
+                    '<h4 class="related-title">' + (related.title || '読み込み中...') + '</h4>' +
+                    '<a href="/channel/' + (related.authorId || '') + '" class="related-author">' + (related.author || '') + '</a>' +
+                    '<p class="related-views">' + (related.views || '') + '</p>' +
+                    '</div>';
+                
+                relatedVideosContainer.appendChild(a);
+            });
+            
+            hideRetryStatus();
+        }
+
+        function loadRelatedVideos() {
+            if (isLoading) return;
+            if (retryCount >= maxRetries) {
+                showRetryStatus('❌ 関連動画の読み込みに失敗しました（' + maxRetries + '回試行）');
+                return;
+            }
+
+            isLoading = true;
+            retryCount++;
+            
+            showRetryStatus('🔄 関連動画を読み込み中... (' + retryCount + '/' + maxRetries + ')');
+
+            fetch('/api/video-info/' + videoId)
+                .then(response => {
+                    if (!response.ok) throw new Error('HTTP ' + response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.related && data.related.length > 0) {
+                        renderRelatedVideos(data.related, mode);
+                        isLoading = false;
+                    } else {
+                        throw new Error('No related videos found');
+                    }
+                })
+                .catch(error => {
+                    console.log('関連動画読み込みエラー:', error.message);
+                    isLoading = false;
+                    
+                    if (retryCount < maxRetries) {
+                        const delay = 2000 * Math.min(retryCount, 5); // 最大10秒まで増加
+                        retryTimeout = setTimeout(loadRelatedVideos, delay);
+                    } else {
+                        showRetryStatus('❌ 関連動画の読み込みに失敗しました（' + maxRetries + '回試行）');
+                    }
+                });
+        }
+
+        function checkAndLoadRelatedVideos() {
+            const hasRelatedVideos = relatedVideosContainer.querySelector('.related-card');
+            
+            if (!hasRelatedVideos) {
+                console.log('関連動画が表示されていません。APIから読み込みを開始します...');
+                loadRelatedVideos();
+            } else {
+                hideRetryStatus();
+            }
+        }
+
+        // ページ読み込み後、100msで関連動画をチェック
+        setTimeout(checkAndLoadRelatedVideos, 100);
+    })();
+
     // Chat toggle functionality
     (function() {
         const chatToggleBtn = document.getElementById('chatToggleBtn');
