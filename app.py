@@ -385,6 +385,7 @@ def get_video_info(video_id):
         'author': data.get('author', ''),
         'authorId': data.get('authorId', ''),
         'authorThumbnail': author_thumbnail,
+        'thumbnail': f"/api/proxy-thumbnail?video_id={video_id}",
         'views': data.get('viewCount', 0),
         'likes': data.get('likeCount', 0),
         'subscribers': data.get('subCountText', ''),
@@ -928,6 +929,33 @@ def api_video_info(video_id):
     if not info:
         return jsonify({'error': '動画情報を取得できませんでした'}), 404
     return jsonify(info)
+
+@app.route('/api/proxy-thumbnail')
+@login_required
+def proxy_thumbnail():
+    video_id = request.args.get('video_id', '')
+    if not video_id:
+        return jsonify({'error': 'video_id is required'}), 400
+    
+    try:
+        # YouTube のサムネイル画像を取得
+        url = f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg"
+        response = http_session.get(url, headers=get_random_headers(), timeout=5)
+        if response.status_code == 200:
+            return Response(response.content, mimetype='image/jpeg')
+    except Exception as e:
+        print(f"Thumbnail proxy error: {e}")
+    
+    # フォールバック: デフォルトサムネイル
+    try:
+        fallback_url = f"https://i.ytimg.com/vi/{video_id}/mqdefault.jpg"
+        response = http_session.get(fallback_url, headers=get_random_headers(), timeout=5)
+        if response.status_code == 200:
+            return Response(response.content, mimetype='image/jpeg')
+    except:
+        pass
+    
+    return jsonify({'error': 'Thumbnail not found'}), 404
 
 @app.route('/api/download/<video_id>')
 @login_required
