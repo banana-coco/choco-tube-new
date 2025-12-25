@@ -36,7 +36,7 @@
     <div class="channel-tab-content" id="tab-videos">
         <div class="video-grid" id="video-grid">
             {% for video in videos %}
-            <a href="/watch?v={{ video.id }}" class="video-card dynamic-video-link" data-video-id="{{ video.id }}">
+            <a href="/{{ 'watch' if request.args.get('search_context') == 'music' else ('w' if request.args.get('vc') == '2' else ('ume' if request.args.get('vc') == '3' else 'watch')) }}?v={{ video.id }}{% if request.args.get('search_context') == 'music' %}&search_context=music{% endif %}" class="video-card dynamic-video-link" data-video-id="{{ video.id }}">
                 <div class="thumbnail-container">
                     <img src="/thumbnail?v={{ video.id }}" alt="{{ video.title }}" class="thumbnail" loading="lazy">
                     {% if video.length %}
