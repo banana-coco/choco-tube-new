@@ -2,6 +2,12 @@
 
 {% block title %}{{ video.title if video else '動画' }} - チョコTube{% endblock %}
 
+{% if request.args.get('search_context') == 'music' %}
+{% set search_context = 'music' %}
+{% else %}
+{% set search_context = 'general' %}
+{% endif %}
+
 {% block extra_css %}
 <link href="https://cdn.jsdelivr.net/npm/hls.js@1.4.12/dist/hls.min.js" rel="preload" as="script">
 {% endblock %}
@@ -197,7 +203,7 @@
             </div>
             <div class="playlist-videos-sidebar">
                 {% for pv in playlist_videos %}
-                <a href="/{{ 'watch' if mode == 'stream' else ('w' if mode == 'high' else ('ume' if mode == 'embed' else 'edu')) }}?v={{ pv.id }}&list={{ playlist_id }}&index={{ loop.index0 }}" 
+                <a href="/{{ 'watch' if mode == 'stream' else ('w' if mode == 'high' else ('ume' if mode == 'embed' else 'edu')) }}?v={{ pv.id }}&list={{ playlist_id }}&index={{ loop.index0 }}{% if search_context == 'music' %}&search_context=music{% endif %}" 
                    class="playlist-item {% if loop.index0 == playlist_index %}active{% endif %}">
                     <span class="playlist-item-index">{{ loop.index }}</span>
                     <div class="playlist-item-thumbnail">
@@ -223,7 +229,7 @@
         <div class="related-videos" id="relatedVideosContainer">
             {% if video and video.related %}
             {% for related in video.related %}
-            <a href="/{{ 'watch' if mode == 'stream' else ('w' if mode == 'high' else ('ume' if mode == 'embed' else 'edu')) }}?v={{ related.id }}" class="related-card dynamic-related-link" data-video-id="{{ related.id }}">
+            <a href="/{{ 'watch' if mode == 'stream' else ('w' if mode == 'high' else ('ume' if mode == 'embed' else 'edu')) }}?v={{ related.id }}{% if search_context == 'music' %}&search_context=music{% endif %}" class="related-card dynamic-related-link" data-video-id="{{ related.id }}">
                 <div class="related-thumbnail-container">
                     <img src="/thumbnail?v={{ related.id }}" alt="{{ related.title }}" class="related-thumbnail" loading="lazy">
                     {% if related.length %}
