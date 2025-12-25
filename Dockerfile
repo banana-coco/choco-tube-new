@@ -25,4 +25,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:5000/login || exit 1
 
 # Gunicorn で起動
-CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "4", "--timeout", "300", "--keep-alive", "5", "--log-level", "info"]
+CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:5000", "--workers", "3", "--threads", "4", "--timeout", "300", "--keep-alive", "5", "--log-level", "info"]
