@@ -29,7 +29,7 @@
 
     <div class="playlist-actions">
         {% if videos and videos|length > 0 %}
-        <a href="/watch?v={{ videos[0].id }}&list={{ playlist.id if playlist else request.args.get('list', '') }}&index=0" class="play-all-btn dynamic-play-all" data-video-id="{{ videos[0].id }}" data-list-id="{{ playlist.id if playlist else request.args.get('list', '') }}">
+        <a href="/{{ 'watch' if request.args.get('search_context') == 'music' else 'watch' }}?v={{ videos[0].id }}&list={{ playlist.id if playlist else request.args.get('list', '') }}&index=0{% if request.args.get('search_context') == 'music' %}&search_context=music{% endif %}" class="play-all-btn dynamic-play-all" data-video-id="{{ videos[0].id }}" data-list-id="{{ playlist.id if playlist else request.args.get('list', '') }}">
             ▶️ 最初から再生
         </a>
         {% endif %}
@@ -39,7 +39,7 @@
         <h2 class="section-title">動画一覧</h2>
         <div class="playlist-videos">
             {% for video in videos %}
-            <a href="/watch?v={{ video.id }}&list={{ playlist.id }}&index={{ loop.index0 }}" class="playlist-video-card dynamic-video-link" data-video-id="{{ video.id }}" data-list-id="{{ playlist.id }}" data-index="{{ loop.index0 }}">
+            <a href="/{{ 'watch' if request.args.get('search_context') == 'music' else 'watch' }}?v={{ video.id }}&list={{ playlist.id }}&index={{ loop.index0 }}{% if request.args.get('search_context') == 'music' %}&search_context=music{% endif %}" class="playlist-video-card dynamic-video-link" data-video-id="{{ video.id }}" data-list-id="{{ playlist.id }}" data-index="{{ loop.index0 }}">
                 <div class="playlist-video-index">{{ loop.index }}</div>
                 <div class="playlist-thumbnail-container">
                     <img src="/thumbnail?v={{ video.id }}" alt="{{ video.title }}" class="playlist-thumbnail" loading="lazy">
