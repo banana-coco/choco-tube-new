@@ -12,7 +12,7 @@ import subprocess
 import re
 from functools import lru_cache
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from flask import Flask, render_template, request, jsonify, Response, redirect, url_for, session, send_file
+from flask import Flask, render_template, request, jsonify, Response, redirect, url_for, session, send_file, after_this_request
 from functools import wraps
 import yt_dlp
 
@@ -667,6 +667,34 @@ def search():
 
     return render_template('search.html', results=results, query=query, vc=vc, proxy=proxy, theme=theme, next=next_page, search_mode=search_mode)
 
+@app.route('/music')
+@login_required
+def music():
+    query = request.args.get('q', '')
+    page = request.args.get('page', '1')
+    vc = request.cookies.get('vc', '1')
+    proxy = request.cookies.get('proxy', 'False')
+    theme = request.cookies.get('theme', 'dark')
+    search_mode = request.cookies.get('search_mode', 'youtube')
+
+    if not query:
+        return render_template('music.html', results=[], query='', vc=vc, proxy=proxy, theme=theme, next='', search_mode=search_mode)
+
+    # 音楽検索用にクエリを修正（"official audio" キーワードを追加）
+    music_query = f"{query} official audio"
+    
+    if page == '1':
+        if search_mode == 'invidious':
+            results = get_invidious_search_first(music_query)
+        else:
+            results = get_youtube_search(music_query)
+    else:
+        results = invidious_search(music_query, int(page))
+    
+    next_page = f"/music?q={urllib.parse.quote(query)}&page={int(page) + 1}"
+
+    return render_template('music.html', results=results, query=query, vc=vc, proxy=proxy, theme=theme, next=next_page, search_mode=search_mode)
+
 @app.route('/watch')
 @login_required
 def watch():
@@ -1157,6 +1185,19 @@ def api_internal_download(video_id):
 
         if os.path.exists(cookie_file):
             os.remove(cookie_file)
+
+        # 送信後にファイルを削除する
+        @after_this_request
+        def remove_file(response):
+            try:
+                if os.path.exists(output_path):
+                    os.remove(output_path)
+                # cookie_fileも再確認して削除
+                if os.path.exists(cookie_file):
+                    os.remove(cookie_file)
+            except Exception as e:
+                print(f"Error removing download file: {e}")
+            return response
 
         if format_type == 'mp3':
             if os.path.exists(output_path):
