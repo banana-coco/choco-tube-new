@@ -246,7 +246,12 @@
             {% endif %}
         </div>
         <div class="chat-container" id="chatContainer" style="display:none;">
-            <iframe src="/chat" class="chat-iframe" style="width:100%; height:500px; border:none; border-radius:8px;"></iframe>
+            <div class="chat-header-bar" style="background: #1a1a2e; padding: 8px; border-bottom: 1px solid #2a2a4a; display: flex; gap: 8px; justify-content: center; border-radius: 8px 8px 0 0;">
+                <button onclick="switchWatchChat('main')" id="btn-watch-main" class="chat-toggle-btn active" style="font-size: 0.8rem; padding: 4px 12px; background: #28a745;">通常</button>
+                <button onclick="switchWatchChat('backup')" id="btn-watch-backup" class="chat-toggle-btn" style="font-size: 0.8rem; padding: 4px 12px; background: #007BFF;">予備</button>
+            </div>
+            <iframe src="/chat" id="watch-chat-main" class="chat-iframe" style="width:100%; height:500px; border:none; border-radius:0 0 8px 8px; display: block;"></iframe>
+            <iframe src="https://chat-test-1-1.onrender.com/" id="watch-chat-backup" class="chat-iframe" style="width:100%; height:500px; border:none; border-radius:0 0 8px 8px; display: none;"></iframe>
         </div>
     </aside>
 </div>
@@ -882,6 +887,25 @@ document.addEventListener('DOMContentLoaded', function() {
     })();
 
     // Chat toggle functionality
+    window.switchWatchChat = function(type) {
+        const mainChat = document.getElementById('watch-chat-main');
+        const backupChat = document.getElementById('watch-chat-backup');
+        const btnMain = document.getElementById('btn-watch-main');
+        const btnBackup = document.getElementById('btn-watch-backup');
+
+        if (type === 'main') {
+            mainChat.style.display = 'block';
+            backupChat.style.display = 'none';
+            btnMain.style.background = '#28a745';
+            btnBackup.style.background = '#007BFF';
+        } else {
+            mainChat.style.display = 'none';
+            backupChat.style.display = 'block';
+            btnMain.style.background = '#007BFF';
+            btnBackup.style.background = '#28a745';
+        }
+    };
+
     (function() {
         const chatToggleBtn = document.getElementById('chatToggleBtn');
         const relatedVideosContainer = document.getElementById('relatedVideosContainer');
