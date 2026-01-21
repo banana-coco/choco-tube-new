@@ -19,29 +19,40 @@
       align-items: center;
       padding: 0 16px;
       border-bottom: 1px solid #2a2a4a;
+      gap: 12px;
     }
     
-    .back-btn {
+    .toggle-btn {
       display: flex;
       align-items: center;
       gap: 8px;
       color: #fff;
       text-decoration: none;
       padding: 8px 16px;
-      background: #8b4513;
+      background: #007BFF;
       border-radius: 8px;
       font-size: 14px;
+      cursor: pointer;
+      border: none;
       transition: background 0.3s;
     }
     
-    .back-btn:hover {
-      background: #d2691e;
+    .toggle-btn:hover {
+      background: #0056b3;
+    }
+
+    .toggle-btn.active {
+      background: #28a745;
     }
     
     .full-screen-iframe {
       width: 100%;
       height: calc(100% - 50px);
       border: none;
+      display: none;
+    }
+
+    .full-screen-iframe.active {
       display: block;
     }
   </style>
@@ -49,9 +60,27 @@
 <body>
   <div class="back-bar" id="backBar">
     <a href="/" class="back-btn">🍫 チョコTubeに戻る</a>
+    <button onclick="switchChat('main')" id="btn-main" class="toggle-btn active">通常チャット</button>
+    <button onclick="switchChat('backup')" id="btn-backup" class="toggle-btn">予備チャット</button>
   </div>
-  <iframe src="https://bbs-be-ta2-bl9w.onrender.com" class="full-screen-iframe" frameborder="0"></iframe>
+  <iframe src="https://bbs-be-ta2-bl9w.onrender.com" id="chat-main" class="full-screen-iframe active" frameborder="0"></iframe>
+  <iframe src="https://chat-test-1-1.onrender.com/" id="chat-backup" class="full-screen-iframe" frameborder="0"></iframe>
   <script>
+    function switchChat(type) {
+      document.getElementById('chat-main').classList.remove('active');
+      document.getElementById('chat-backup').classList.remove('active');
+      document.getElementById('btn-main').classList.remove('active');
+      document.getElementById('btn-backup').classList.remove('active');
+
+      if (type === 'main') {
+        document.getElementById('chat-main').classList.add('active');
+        document.getElementById('btn-main').classList.add('active');
+      } else {
+        document.getElementById('chat-backup').classList.add('active');
+        document.getElementById('btn-backup').classList.add('active');
+      }
+    }
+
     // iframeから呼ばれている場合、戻るボタンを非表示にする
     if (window.parent !== window) {
       document.getElementById('backBar').style.display = 'none';
