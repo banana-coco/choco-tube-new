@@ -80,14 +80,13 @@
             </div>
 
             {% if mode == 'education' %}
-            <div class="edu-source-selector" style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px;">
-                <label for="eduSourceSelect" style="display: block; margin-bottom: 5px; font-size: 14px; color: #aaa;">EDUパラメータソース:</label>
-                <select id="eduSourceSelect" style="width: 100%; padding: 8px; border-radius: 4px; background: #333; color: white; border: 1px solid #444;">
+            <div class="edu-source-selector">
+                <label for="eduSourceSelect">EDUパラメータ:</label>
+                <select id="eduSourceSelect">
                     {% for key, source in edu_sources.items() %}
                     <option value="{{ key }}" {% if edu_source == key %}selected{% endif %}>{{ source.name }}</option>
                     {% endfor %}
                 </select>
-                <p style="font-size: 11px; color: #777; margin-top: 5px;">※ 変更するとページがリロードされます</p>
             </div>
             {% endif %}
 
@@ -715,11 +714,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         eduSourceSelect.addEventListener('change', function() {
             setCookie('edu_source', this.value, 30);
-            
-            // 現在のURLパラメータを取得
-            var url = new URL(window.location.href);
-            // vパラメータ（動画ID）を維持してリロード
-            window.location.href = url.pathname + url.search;
+            window.location.reload();
         });
     })();
 
