@@ -67,56 +67,62 @@ EDU_PARAM_SOURCES = {
         'url': 'https://raw.githubusercontent.com/siawaseok3/wakame/master/video_config.json',
         'type': 'json_params'
     },
-    'woolisbest1': {
-        'name': 'woolisbest1',
-        'url': 'https://raw.githubusercontent.com/woolisbest-4520/about-youtube/refs/heads/main/edu.json',
+    'about_youtube_parameter': {
+        'name': 'About YT (parameter)',
+        'url': 'https://raw.githubusercontent.com/woolisbest-4520/about-youtube/refs/heads/main/edu/parameter.txt',
+        'type': 'raw_text'
+    },
+    'about_youtube_edu': {
+        'name': 'About YT (edu)',
+        'url': 'https://raw.githubusercontent.com/woolisbest-4520/about-youtube/refs/heads/main/edu/edu.txt',
+        'type': 'raw_text'
+    },
+    'about_youtube_ep': {
+        'name': 'About YT (ep)',
+        'url': 'https://raw.githubusercontent.com/woolisbest-4520/about-youtube/refs/heads/main/edu/ep.txt',
+        'type': 'raw_text'
+    },
+    'about_youtube_key1': {
+        'name': 'About YT (key1)',
+        'url': 'https://raw.githubusercontent.com/woolisbest-4520/about-youtube/refs/heads/main/edu/key1.txt',
+        'type': 'raw_text'
+    },
+    'about_youtube_key2': {
+        'name': 'About YT (key2)',
+        'url': 'https://raw.githubusercontent.com/woolisbest-4520/about-youtube/refs/heads/main/edu/key2.txt',
+        'type': 'raw_text'
+    },
+    'wakame': {
+        'name': 'わかめ',
+        'url': 'https://raw.githubusercontent.com/wakame02/wktopu/refs/heads/main/edu.text',
+        'type': 'raw_text'
+    },
+    'toka_kun_key1': {
+        'name': 'Toka_Kun (key1)',
+        'url': 'https://raw.githubusercontent.com/toka-kun/Education/refs/heads/main/keys/key1.json',
         'type': 'json_params'
     },
-    'woolisbest2': {
-        'name': 'woolisbest2',
-        'url': 'https://raw.githubusercontent.com/woolisbest-4520/about-youtube/refs/heads/main/parameter.json',
+    'toka_kun_key2': {
+        'name': 'Toka_Kun (key2)',
+        'url': 'https://raw.githubusercontent.com/toka-kun/Education/refs/heads/main/keys/key2.json',
         'type': 'json_params'
+    },
+    'hgkf_tube_1': {
+        'name': 'hgkf-Tube (1)',
+        'url': 'https://raw.githubusercontent.com/70142-lgtm/hgkf-Tube/refs/heads/main/hgkf01001_1.txt',
+        'type': 'raw_text'
+    },
+    'hgkf_tube_2': {
+        'name': 'hgkf-Tube (2)',
+        'url': 'https://raw.githubusercontent.com/70142-lgtm/hgkf-Tube/refs/heads/main/hgkf01001_2.txt',
+        'type': 'raw_text'
     },
     'kahoot': {
-        'name': 'その他',
+        'name': 'その他 (Kahoot)',
         'url': 'https://apis.kahoot.it/media-api/youtube/key',
         'type': 'kahoot_key'
     }
 }
-
-_edu_params_cache = {}
-_edu_cache_timestamp = {}
-_trending_cache = {'data': None, 'timestamp': 0}
-_thumbnail_cache = {}
-
-http_session = requests.Session()
-retry_strategy = Retry(total=2, backoff_factor=0.1, status_forcelist=[500, 502, 503, 504])
-adapter = HTTPAdapter(max_retries=retry_strategy, pool_connections=20, pool_maxsize=20)
-http_session.mount("http://", adapter)
-http_session.mount("https://", adapter)
-
-USER_AGENTS = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:92.0) Gecko/20100101 Firefox/92.0',
-]
-
-INVIDIOUS_INSTANCES = [
-    'https://inv.nadeko.net/',
-    'https://invidious.f5.si/',
-    'https://invidious.lunivers.trade/',
-    'https://invidious.ducks.party/',
-    'https://super8.absturztau.be/',
-    'https://invidious.nikkosphere.com/',
-    'https://yt.omada.cafe/',
-    'https://iv.melmac.space/',
-    'https://iv.duti.dev/',
-]
-
-def get_random_headers():
-    return {
-        'User-Agent': random.choice(USER_AGENTS)
-    }
 
 def get_edu_params(source='siawaseok'):
     cache_duration = 300
@@ -139,6 +145,11 @@ def get_edu_params(source='siawaseok'):
                 params = f"autoplay=1&rel=0&modestbranding=1&key={api_key}"
             else:
                 params = "autoplay=1&rel=0&modestbranding=1"
+        elif source_config['type'] == 'raw_text':
+            params = res.text.strip()
+            if params.startswith('?'):
+                params = params[1:]
+            params = params.replace('&amp;', '&')
         else:
             data = res.json()
             params = data.get('params', '')
