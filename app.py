@@ -58,8 +58,8 @@ _current_api_key_index = 0
 
 EDU_VIDEO_API = "https://siawaseok.duckdns.org/api/video2/"
 EDU_CONFIG_URL = "https://raw.githubusercontent.com/siawaseok3/wakame/master/video_config.json"
-STREAM_API = "https://ytdl-0et1.onrender.com/stream/"
-M3U8_API = "https://ytdl-0et1.onrender.com/m3u8/"
+STREAM_API = "https://simple-yt-stream.onrender.com/api/video/"
+M3U8_API = "https://simple-yt-stream.onrender.com//api/m3u8/"
 
 EDU_PARAM_SOURCES = {
     'siawaseok': {
